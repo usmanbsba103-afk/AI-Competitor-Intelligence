@@ -1,388 +1,380 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import google.generativeai as genai
+import os
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+from google import genai
 
-# 1. Page Configuration
+# --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="CompetitorIQ | AI Market Intelligence",
+    page_title="Competitor Intelligence & Market Analysis",
     page_icon=":material/analytics:",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# 2. Custom Royal Green & White Executive CSS
-st.markdown("""
-<style>
-    /* Royal Green Hero Banner */
-    .royal-banner {
-        background: linear-gradient(135deg, #0B4F32 0%, #146C43 100%);
-        padding: 26px 32px;
-        border-radius: 12px;
-        color: #FFFFFF;
-        margin-bottom: 22px;
-        box-shadow: 0 6px 18px rgba(11, 79, 50, 0.14);
-    }
-    .royal-banner h1 {
-        color: #FFFFFF !important;
-        margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-    }
-    .royal-banner p {
-        color: #D8F3DC !important;
-        margin: 6px 0 0 0;
-        font-size: 14px;
-    }
-    /* Executive KPI Metric Cards */
-    .kpi-card {
-        background-color: #FFFFFF;
-        border: 1px solid #D8E8E0;
-        border-left: 5px solid #0B4F32;
-        border-radius: 10px;
-        padding: 16px 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    }
-    .kpi-title {
-        color: #4A6B5D;
-        font-size: 13px;
-        font-weight: 600;
-        text-transform: uppercase;
-        margin-bottom: 4px;
-    }
-    .kpi-value {
-        color: #0B4F32;
-        font-size: 24px;
-        font-weight: 700;
-    }
-    /* Login Card Header */
-    .login-header {
-        background: linear-gradient(135deg, #0B4F32 0%, #146C43 100%);
-        color: white;
-        padding: 24px;
-        border-radius: 12px 12px 0 0;
-        text-align: center;
-    }
-    /* Primary Action Buttons */
-    div.stButton > button:first-child {
-        background-color: #0B4F32;
-        color: #FFFFFF;
-        border-radius: 8px;
-        border: none;
-        font-weight: 600;
-        padding: 0.55rem 1.3rem;
-        transition: all 0.2s ease;
-    }
-    div.stButton > button:first-child:hover {
-        background-color: #083B25;
-        color: #FFFFFF;
-        box-shadow: 0 4px 10px rgba(11, 79, 50, 0.25);
-    }
-</style>
-""", unsafe_allow_html=True)
+# --- CUSTOM ROYAL GREEN & WHITE EXECUTIVE STYLING ---
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background-color: #FFFFFF;
+            color: #0F291E;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #F2F8F5;
+            border-right: 1px solid #D5E8DF;
+        }
+        .exec-header {
+            background: linear-gradient(135deg, #0B4F32 0%, #146C43 100%);
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            color: #FFFFFF;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(11, 79, 50, 0.12);
+        }
+        .exec-header h1 {
+            color: #FFFFFF !important;
+            font-size: 1.85rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .exec-header p {
+            color: #E2F1EA !important;
+            font-size: 0.95rem;
+            margin: 0.4rem 0 0 0;
+        }
+        [data-testid="stMetric"] {
+            background-color: #FFFFFF;
+            border: 1px solid #D5E8DF;
+            border-left: 5px solid #0B4F32;
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(15, 41, 30, 0.04);
+        }
+        .stButton > button {
+            background-color: #0B4F32 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-weight: 600 !important;
+            padding: 0.5rem 1.2rem !important;
+        }
+        .stButton > button:hover {
+            background-color: #083B25 !important;
+        }
+        .login-card {
+            background-color: #F2F8F5;
+            border: 1px solid #D5E8DF;
+            border-top: 5px solid #0B4F32;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# 3. Automatic Backend API Key Loader (Zero User Input Needed)
-def get_gemini_model():
-    api_key = st.secrets.get("GEMINI_API_KEY", "")
-    if not api_key:
-        return None
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-2.5-flash")
-
-# 4. Authentication Session State
+# --- SESSION STATE INITIALIZATION ---
 if "authenticated" not in st.session_state:
-    st.session_state["authenticated"] = False
-if "users_db" not in st.session_state:
-    st.session_state["users_db"] = {"admin": "fyp2026", "usman": "12345"}
+    st.session_state.authenticated = False
 if "current_user" not in st.session_state:
-    st.session_state["current_user"] = ""
+    st.session_state.current_user = ""
+if "users_db" not in st.session_state:
+    st.session_state.users_db = {"admin": "fyp2026"}
 
-# ================= LOGIN / SIGN-UP PORTAL =================
-if not st.session_state["authenticated"]:
-    col_l, col_c, col_r = st.columns([1, 1.25, 1])
-    with col_c:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("""
-        <div class="login-header">
-            <h2 style="margin:0; color:white;">CompetitorIQ Portal</h2>
-            <p style="margin:6px 0 0 0; color:#D8F3DC; font-size:14px;">AI-Powered Competitor Intelligence & Market Analysis</p>
-        </div>
-        """, unsafe_allow_html=True)
 
-        tab_signin, tab_signup = st.tabs([":material/login: Sign In", ":material/person_add: Create Account"])
+# --- AUTHENTICATION PORTAL ---
+def render_login_portal():
+    col1, col2, col3 = st.columns([1, 1.4, 1])
+    with col2:
+        st.markdown(
+            """
+            <div class="exec-header" style="text-align:center; margin-top:2rem;">
+                <h1>Competitor Intelligence Portal</h1>
+                <p>Enterprise Market Analytics & Strategic Benchmarking System</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        tab_login, tab_register = st.tabs(["Sign In", "Create Account"])
 
-        with tab_signin:
+        with tab_login:
             with st.form("login_form"):
-                username = st.text_input("Username", placeholder="Enter your username")
-                password = st.text_input("Password", type="password", placeholder="Enter your password")
-                submitted = st.form_submit_button("Sign In to Dashboard", use_container_width=True)
-
+                username = st.text_input("Username", placeholder="Enter username")
+                password = st.text_input("Password", type="password", placeholder="Enter password")
+                submitted = st.form_submit_button("Sign In", use_container_width=True)
                 if submitted:
-                    if username in st.session_state["users_db"] and st.session_state["users_db"][username] == password:
-                        st.session_state["authenticated"] = True
-                        st.session_state["current_user"] = username
+                    if username in st.session_state.users_db and st.session_state.users_db[username] == password:
+                        st.session_state.authenticated = True
+                        st.session_state.current_user = username
                         st.rerun()
                     else:
-                        st.error("Invalid credentials. Please verify your username and password.")
-            st.caption("Demo Credentials — Username: `admin` | Password: `fyp2026`")
+                        st.error("Invalid credentials. Use demo account: admin / fyp2026")
+            st.caption("Demo Access — Username: `admin` | Password: `fyp2026`")
 
-        with tab_signup:
+        with tab_register:
             with st.form("register_form"):
-                new_user = st.text_input("Choose a Username")
-                new_pass = st.text_input("Create Password", type="password")
-                confirm_pass = st.text_input("Confirm Password", type="password")
-                reg_submitted = st.form_submit_button("Register Account", use_container_width=True)
-
-                if reg_submitted:
-                    if not new_user or not new_pass:
-                        st.warning("All fields are required.")
-                    elif new_user in st.session_state["users_db"]:
-                        st.error("This username is already taken.")
-                    elif new_pass != confirm_pass:
-                        st.error("Passwords do not match.")
+                new_user = st.text_input("Choose Username")
+                new_pass = st.text_input("Choose Password", type="password")
+                reg_submit = st.form_submit_button("Register Account", use_container_width=True)
+                if reg_submit:
+                    if new_user and new_pass:
+                        if new_user in st.session_state.users_db:
+                            st.warning("Username already exists.")
+                        else:
+                            st.session_state.users_db[new_user] = new_pass
+                            st.success("Account created. Please switch to Sign In.")
                     else:
-                        st.session_state["users_db"][new_user] = new_pass
-                        st.success("Account registered successfully! Please sign in.")
+                        st.warning("Please complete both fields.")
+
+
+if not st.session_state.authenticated:
+    render_login_portal()
     st.stop()
 
-# ================= MAIN EXECUTIVE DASHBOARD =================
 
-# Top Royal Green Banner
-st.markdown(f"""
-<div class="royal-banner">
-    <h1>AI-Powered Competitor Intelligence & Market Analysis System</h1>
-    <p>Logged in as <b>{st.session_state['current_user'].capitalize()}</b> &bull; Real-Time Market Tracking, Sentiment Intelligence & Strategic Advisory</p>
-</div>
-""", unsafe_allow_html=True)
+# --- HELPER FUNCTIONS ---
+def get_gemini_client():
+    api_key = ""
+    try:
+        api_key = st.secrets.get("GEMINI_API_KEY", "")
+    except Exception:
+        api_key = os.environ.get("GEMINI_API_KEY", "")
+    if not api_key:
+        return None
+    return genai.Client(api_key=api_key.strip())
 
-# Clean Sidebar (No API Key Box!)
-st.sidebar.markdown(f"### :material/account_circle: {st.session_state['current_user'].capitalize()}")
-if st.sidebar.button("Sign Out", icon=":material/logout:", use_container_width=True):
-    st.session_state["authenticated"] = False
-    st.session_state["current_user"] = ""
-    st.rerun()
 
-st.sidebar.divider()
-st.sidebar.subheader(":material/database: Market Dataset")
-uploaded_file = st.sidebar.file_uploader("Upload Competitor Data (.csv / .xlsx)", type=["csv", "xlsx"])
+def load_sample_data():
+    return pd.DataFrame(
+        {
+            "Competitor_Name": ["My_Brand", "Competitor_A", "Competitor_B", "Competitor_C", "Competitor_D"],
+            "Price": [4500, 4200, 5200, 3900, 4800],
+            "Customer_Rating": [4.6, 4.2, 4.8, 3.9, 4.4],
+            "Market_Share": [24, 28, 22, 14, 12],
+            "Monthly_Sales": [1850, 2100, 1620, 1150, 980],
+            "Key_Advantage": [
+                "Fast delivery & warranty",
+                "Aggressive discounting",
+                "Premium build quality",
+                "Lowest entry price",
+                "Strong retail presence",
+            ],
+        }
+    )
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
-    st.sidebar.success("Custom dataset active", icon=":material/check_circle:")
-else:
-    df = pd.read_csv("sample_data.csv")
-    st.sidebar.info("Using default benchmark dataset", icon=":material/info:")
 
-# Downloadable Sample Template in Sidebar
-st.sidebar.download_button(
-    label="Download CSV Template",
-    data=df.to_csv(index=False),
-    file_name="competitor_template.csv",
-    mime="text/csv",
-    icon=":material/download:",
-    use_container_width=True
-)
+def scrape_competitor_page(url: str) -> str:
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    resp = requests.get(url, headers=headers, timeout=12)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+    title = soup.title.string.strip() if soup.title and soup.title.string else "N/A"
+    meta_desc = ""
+    meta_tag = soup.find("meta", attrs={"name": "description"})
+    if meta_tag and meta_tag.get("content"):
+        meta_desc = meta_tag["content"].strip()
+    headings = [h.get_text(" ", strip=True) for h in soup.find_all(["h1", "h2"])[:8]]
+    paragraphs = [p.get_text(" ", strip=True) for p in soup.find_all("p")[:6]]
+    return (
+        f"Page Title: {title}\n"
+        f"Meta Description: {meta_desc}\n"
+        f"Key Headings: {' | '.join(headings)}\n"
+        f"Excerpt: {' '.join(paragraphs)[:1200]}"
+    )
 
-# Sentiment Classification Engine
-def classify_sentiment(review):
-    text = str(review).lower()
-    positive_words = ["amazing", "best", "good", "comfortable", "premium", "great", "love", "fast"]
-    negative_words = ["late", "poor", "cheap", "expensive", "bad", "worst", "slow", "broken"]
-    pos = sum(w in text for w in positive_words)
-    neg = sum(w in text for w in negative_words)
-    if pos > neg:
-        return "Positive"
-    elif neg > pos:
-        return "Negative"
-    return "Neutral"
 
-df["Sentiment"] = df["Customer_Review"].apply(classify_sentiment)
-
-# Executive KPI Summary Row
-avg_price = int(df["Price"].mean())
-top_comp = df.loc[df["Rating"].idxmax(), "Competitor_Name"]
-top_rating = df["Rating"].max()
-pos_rate = int((df["Sentiment"] == "Positive").mean() * 100)
-
-my_brand_rows = df[df["Competitor_Name"].str.lower() == "my_brand"]
-alert_count = 0
-if not my_brand_rows.empty:
-    my_price = my_brand_rows["Price"].mean()
-    cheaper_comps = df[(df["Competitor_Name"].str.lower() != "my_brand") & (df["Price"] < my_price)]
-    alert_count = len(cheaper_comps)
-
-k1, k2, k3, k4 = st.columns(4)
-with k1:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Average Market Price</div><div class="kpi-value">PKR {avg_price:,}</div></div>', unsafe_allow_html=True)
-with k2:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Top Rated Player</div><div class="kpi-value">{top_comp} ({top_rating}★)</div></div>', unsafe_allow_html=True)
-with k3:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Positive Sentiment</div><div class="kpi-value">{pos_rate}%</div></div>', unsafe_allow_html=True)
-with k4:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Active Price Alerts</div><div class="kpi-value">{alert_count}</div></div>', unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Royal Green Chart Palette
-ROYAL_PALETTE = ["#0B4F32", "#1B7A50", "#40916C", "#74C69D", "#2D6A4F"]
-
-# Main Navigation Tabs
-tab1, tab2, tab3 = st.tabs([
-    ":material/monitoring: Market Overview & AI SWOT",
-    ":material/travel_explore: Live Web Intelligence",
-    ":material/smart_toy: AI Strategy Advisor"
-])
-
-# ================= TAB 1: MARKET OVERVIEW & CONCISE AI SWOT =================
-with tab1:
-    st.subheader(":material/notifications_active: Automated Price Monitoring")
-    if not my_brand_rows.empty:
-        if alert_count > 0:
-            for _, row in cheaper_comps.iterrows():
-                diff = int(my_price - row["Price"])
-                st.error(f"**Price Undercut Alert:** **{row['Competitor_Name']}** ({row['Product_Name']}) is priced **PKR {diff:,}** below your brand (Current Price: PKR {row['Price']:,}).", icon=":material/warning:")
-        else:
-            st.success("**Competitive Edge:** No competitor is currently undercutting your pricing.", icon=":material/verified:")
-    else:
-        st.info("Add 'My_Brand' rows to your dataset to activate automated price undercut alerts.", icon=":material/info:")
-
-    st.subheader(":material/table_view: Competitor Benchmark Table")
-    st.dataframe(df, width="stretch")
-
-    st.subheader(":material/bar_chart: Visual Market Positioning")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        fig_price = px.bar(df, x="Competitor_Name", y="Price", color="Product_Name", title="Price Comparison (PKR)", barmode="group", color_discrete_sequence=ROYAL_PALETTE)
-        fig_price.update_layout(plot_bgcolor="white", paper_bgcolor="white")
-        st.plotly_chart(fig_price, width="stretch")
-    with c2:
-        fig_pos = px.scatter(df, x="Price", y="Rating", color="Competitor_Name", size="Price", hover_name="Product_Name", title="Price vs. Customer Rating", color_discrete_sequence=ROYAL_PALETTE)
-        fig_pos.update_layout(plot_bgcolor="white", paper_bgcolor="white")
-        st.plotly_chart(fig_pos, width="stretch")
-    with c3:
-        fig_sent = px.pie(df, names="Sentiment", title="Review Sentiment Distribution", color_discrete_sequence=["#0B4F32", "#C0392B", "#7F8C8D"])
-        st.plotly_chart(fig_sent, width="stretch")
+# --- SIDEBAR ---
+with st.sidebar:
+    st.markdown(f"### :material/account_circle: {st.session_state.current_user.title()}")
+    if st.button("Sign Out", icon=":material/logout:", use_container_width=True):
+        st.session_state.authenticated = False
+        st.session_state.current_user = ""
+        st.rerun()
 
     st.divider()
+    st.markdown("### :material/database: Market Dataset")
+    uploaded_file = st.file_uploader("Upload Competitor Data (.csv / .xlsx)", type=["csv", "xlsx"])
+
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                df = pd.read_csv(uploaded_file)
+            else:
+                df = pd.read_excel(uploaded_file)
+            st.success("Dataset loaded successfully.")
+        except Exception as e:
+            st.error(f"File error: {e}")
+            df = load_sample_data()
+    else:
+        df = load_sample_data()
+        st.info("Using default benchmark dataset")
+
+    sample_csv = load_sample_data().to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="Download CSV Template",
+        data=sample_csv,
+        file_name="competitor_benchmark_template.csv",
+        mime="text/csv",
+        icon=":material/download:",
+        use_container_width=True,
+    )
+
+
+# --- MAIN EXECUTIVE DASHBOARD ---
+st.markdown(
+    """
+    <div class="exec-header">
+        <h1>AI-Powered Competitor Intelligence & Market Analysis</h1>
+        <p>Automated Competitive Benchmarking, Pricing Analytics & Strategic SWOT Synthesis</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# KPI SUMMARY ROW
+k1, k2, k3, k4 = st.columns(4)
+avg_price = df["Price"].mean() if "Price" in df.columns else 0
+avg_rating = df["Customer_Rating"].mean() if "Customer_Rating" in df.columns else 0
+total_sales = df["Monthly_Sales"].sum() if "Monthly_Sales" in df.columns else 0
+top_leader = (
+    df.loc[df["Market_Share"].idxmax(), "Competitor_Name"]
+    if "Market_Share" in df.columns and "Competitor_Name" in df.columns
+    else "N/A"
+)
+
+k1.metric("Tracked Competitors", len(df))
+k2.metric("Average Market Price", f"PKR {avg_price:,.0f}")
+k3.metric("Average Customer Rating", f"{avg_rating:.2f} / 5.0")
+k4.metric("Market Share Leader", str(top_leader))
+
+st.divider()
+
+# NAVIGATION TABS
+tab_overview, tab_swot, tab_scraper = st.tabs(
+    [
+        ":material/bar_chart: Market Analytics & Charts",
+        ":material/psychology: Executive AI SWOT",
+        ":material/language: Live Web Intelligence",
+    ]
+)
+
+# TAB 1: CHARTS & DATA TABLE
+with tab_overview:
+    st.subheader(":material/table_view: Competitive Benchmark Matrix")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    c1, c2, c3 = st.columns(3)
+    green_palette = ["#0B4F32", "#198754", "#2E9E6B", "#52B788", "#95D5B2"]
+
+    with c1:
+        if "Competitor_Name" in df.columns and "Price" in df.columns:
+            fig_price = px.bar(
+                df,
+                x="Competitor_Name",
+                y="Price",
+                title="Price Comparison",
+                color="Competitor_Name",
+                color_discrete_sequence=green_palette,
+            )
+            fig_price.update_layout(showlegend=False, plot_bgcolor="white", paper_bgcolor="white")
+            st.plotly_chart(fig_price, use_container_width=True)
+
+    with c2:
+        if "Price" in df.columns and "Customer_Rating" in df.columns:
+            fig_scatter = px.scatter(
+                df,
+                x="Price",
+                y="Customer_Rating",
+                size="Monthly_Sales" if "Monthly_Sales" in df.columns else None,
+                color="Competitor_Name" if "Competitor_Name" in df.columns else None,
+                title="Price vs. Rating Positioning",
+                color_discrete_sequence=green_palette,
+            )
+            fig_scatter.update_layout(plot_bgcolor="white", paper_bgcolor="white")
+            st.plotly_chart(fig_scatter, use_container_width=True)
+
+    with c3:
+        if "Competitor_Name" in df.columns and "Market_Share" in df.columns:
+            fig_share = px.pie(
+                df,
+                names="Competitor_Name",
+                values="Market_Share",
+                hole=0.45,
+                title="Market Share Distribution",
+                color_discrete_sequence=green_palette,
+            )
+            fig_share.update_layout(paper_bgcolor="white")
+            st.plotly_chart(fig_share, use_container_width=True)
+
+# TAB 2: CONCISE AI SWOT REPORT
+with tab_swot:
     st.subheader(":material/psychology: Executive AI SWOT & Action Plan")
+    st.caption("Generates a concise, boardroom-ready strategic synthesis directly from your dataset.")
 
     if st.button("Generate Concise SWOT Report", icon=":material/auto_awesome:"):
-        model = get_gemini_model()
-        if not model:
-            st.error("System API key is not configured in server secrets.", icon=":material/error:")
+        client = get_gemini_client()
+        if not client:
+            st.error("System API key is missing in Streamlit Cloud Secrets.")
         else:
-            with st.spinner("Generating concise strategic insights..."):
+            with st.spinner("Synthesizing competitive intelligence..."):
                 try:
+                    data_csv = df.to_csv(index=False)
                     prompt = f"""
-                    You are a Senior Market Intelligence Analyst. Analyze this competitor dataset and provide a SHORT, CRISP, TO-THE-POINT executive brief.
-                    Rules:
-                    - NO long paragraphs. Use short bullet points (max 12-15 words per bullet).
-                    - Provide:
-                      1. **Competitor Pain Points** (3 short bullets)
-                      2. **SWOT Matrix for My_Brand** (2 short bullets each for Strengths, Weaknesses, Opportunities, Threats)
-                      3. **3 Immediate Strategic Actions** (3 short, actionable recommendations)
+                    You are a senior corporate strategy analyst. Analyze this competitor dataset and produce a strictly concise, executive-level SWOT & Action Plan in formal English.
                     
                     Dataset:
-                    {df.to_string()}
+                    {data_csv}
+                    
+                    Formatting Rules:
+                    - Keep every bullet point under 15 words.
+                    - Provide exactly 3 bullet points per section.
+                    - Use bold headings: **Strengths**, **Weaknesses**, **Opportunities**, **Threats**, and **Top 3 Strategic Actions**.
+                    - Cite exact numbers from the dataset. No introductory or closing filler text.
                     """
-                    response = model.generate_content(prompt)
-                    st.session_state["swot_report"] = response.text
+                    response = client.models.generate_content(
+                        model="gemini-2.5-flash",
+                        contents=prompt,
+                    )
+                    st.markdown(response.text)
                 except Exception as e:
                     st.error(f"Analysis failed: {e}")
 
-    if "swot_report" in st.session_state:
-        st.success("Executive Report Ready", icon=":material/task_alt:")
-        st.markdown(st.session_state["swot_report"])
-        st.download_button(
-            label="Export Strategy Report (.txt)",
-            data=st.session_state["swot_report"],
-            file_name="CompetitorIQ_Executive_Report.txt",
-            mime="text/plain",
-            icon=":material/download:"
-        )
+# TAB 3: LIVE WEB SCRAPER INTELLIGENCE
+with tab_scraper:
+    st.subheader(":material/language: Live Competitor Website Analyzer")
+    st.caption("Extract live positioning, headlines, and value propositions from any public competitor URL.")
 
-# ================= TAB 2: LIVE COMPETITOR WEB SCRAPER =================
-with tab2:
-    st.subheader(":material/language: Live Competitor Webpage Analyzer")
-    st.write("Enter a competitor product or landing page URL to extract live positioning data and generate counter-strategies.")
-    
-    url_input = st.text_input("Target Competitor URL:", placeholder="https://www.apple.com/airpods/")
-    
-    if st.button("Extract & Analyze Page", icon=":material/search:"):
-        model = get_gemini_model()
-        if not url_input:
-            st.warning("Please enter a valid URL.", icon=":material/link_off:")
-        elif not model:
-            st.error("System API key is not configured in server secrets.", icon=":material/error:")
+    target_url = st.text_input("Competitor Website URL", placeholder="https://www.example.com")
+    if st.button("Analyze Live Webpage", icon=":material/travel_explore:"):
+        if not target_url.startswith("http"):
+            st.warning("Please enter a valid URL starting with http:// or https://")
         else:
-            with st.spinner("Extracting live webpage content..."):
-                try:
-                    headers = {"User-Agent": "Mozilla/5.0"}
-                    res = requests.get(url_input, headers=headers, timeout=10)
-                    soup = BeautifulSoup(res.text, "html.parser")
-                    
-                    page_title = soup.title.string.strip() if soup.title else "No Title"
-                    headings = [h.get_text(strip=True) for h in soup.find_all(["h1", "h2", "h3"])[:10]]
-                    paragraphs = [p.get_text(strip=True) for p in soup.find_all("p")[:6]]
-                    
-                    scraped_summary = f"Title: {page_title}\nHeadings: {headings}\nHighlights: {paragraphs}"
-                    
-                    with st.expander("Inspect Extracted Raw Content", icon=":material/code:"):
-                        st.text(scraped_summary)
-                    
-                    scrape_prompt = f"""
-                    Provide a concise, bulleted competitive intelligence brief based on this scraped webpage:
-                    1. **Core Offering & Value Proposition** (2 short bullets)
-                    2. **Target Audience & Positioning** (2 short bullets)
-                    3. **Recommended Counter-Strategy** (2 short actionable bullets)
-                    
-                    Scraped Content:
-                    {scraped_summary}
-                    """
-                    ai_web_analysis = model.generate_content(scrape_prompt)
-                    st.success("Web Intelligence Analysis Complete", icon=":material/task_alt:")
-                    st.markdown(ai_web_analysis.text)
-                except Exception as e:
-                    st.error(f"Unable to extract webpage content: {e}")
-
-# ================= TAB 3: AI STRATEGY ADVISOR CHATBOT =================
-with tab3:
-    st.subheader(":material/forum: Interactive AI Strategy Advisor")
-    st.write("Ask direct strategic questions about pricing, customer pain points, or market positioning based on your live dataset.")
-
-    if "chat_history" not in st.session_state:
-        st.session_state["chat_history"] = []
-
-    for msg in st.session_state["chat_history"]:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-
-    user_question = st.chat_input("Ask a strategic question (e.g., How can we outperform Competitor A?)...")
-
-    if user_question:
-        model = get_gemini_model()
-        if not model:
-            st.error("System API key is not configured in server secrets.", icon=":material/error:")
-        else:
-            st.session_state["chat_history"].append({"role": "user", "content": user_question})
-            with st.chat_message("user"):
-                st.markdown(user_question)
-
-            with st.chat_message("assistant"):
-                with st.spinner("Formulating strategic response..."):
+            client = get_gemini_client()
+            if not client:
+                st.error("System API key is missing in Streamlit Cloud Secrets.")
+            else:
+                with st.spinner("Extracting and analyzing live webpage..."):
                     try:
-                        chat_prompt = f"""
-                        You are an Executive Market Strategy Advisor for 'My_Brand'. Answer the user's question concisely using short bullet points based strictly on this dataset.
+                        scraped_text = scrape_competitor_page(target_url)
+                        prompt = f"""
+                        Analyze this scraped competitor webpage content and summarize in 5 concise executive bullet points (max 15 words each):
+                        1. Core Value Proposition
+                        2. Target Audience
+                        3. Pricing / Offer Positioning
+                        4. Key Competitive Edge
+                        5. Recommended Counter-Strategy
                         
-                        Dataset:
-                        {df.to_string()}
-                        
-                        Question: {user_question}
+                        Webpage Content:
+                        {scraped_text}
                         """
-                        reply = model.generate_content(chat_prompt).text
-                        st.markdown(reply)
-                        st.session_state["chat_history"].append({"role": "assistant", "content": reply})
+                        response = client.models.generate_content(
+                            model="gemini-2.5-flash",
+                            contents=prompt,
+                        )
+                        st.markdown(response.text)
                     except Exception as e:
-                        st.error(f"Error: {e}")
+                        st.error(f"Extraction failed: {e}")
