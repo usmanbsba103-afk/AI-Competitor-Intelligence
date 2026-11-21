@@ -2,6 +2,6 @@ streamlit
 pandas
 plotly
 openpyxl
-google-generativeai
-requests
 beautifulsoup4
+requests
+google-genai
