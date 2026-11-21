@@ -32,7 +32,6 @@ def init_db():
         )
         """
     )
-    # Ensure default demo account exists
     demo_hash = hashlib.sha256("fyp2026".encode()).hexdigest()
     c.execute(
         "INSERT OR IGNORE INTO users (username, password_hash, full_name) VALUES (?, ?, ?)",
@@ -79,7 +78,7 @@ def verify_user(username: str, password: str) -> tuple[bool, str]:
 
 init_db()
 
-# --- CLEAN, BRIGHT & EASY-TO-READ LIGHT THEME ---
+# --- CRISP ROYAL BLUE & PURE WHITE HIGH-VISIBILITY THEME ---
 st.markdown(
     """
     <style>
@@ -87,66 +86,65 @@ st.markdown(
 
         html, body, [class*="css"] {
             font-family: 'Inter', sans-serif;
+            color: #0F172A;
         }
         .stApp {
-            background-color: #F8FAFC;
-            color: #1E293B;
+            background-color: #F4F7FB;
+            color: #0F172A;
         }
         [data-testid="stSidebar"] {
             background-color: #FFFFFF;
-            border-right: 1px solid #E2E8F0;
+            border-right: 1px solid #CBD5E1;
         }
         [data-testid="stSidebar"] * {
-            color: #1E293B !important;
+            color: #0F172A !important;
         }
 
-        /* Executive Header */
+        /* High-Contrast Blue & White Executive Banner */
         .exec-header {
-            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
-            padding: 1.6rem 2rem;
+            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+            padding: 1.65rem 2rem;
             border-radius: 14px;
-            border: 1px solid #A7F3D0;
-            border-left: 6px solid #059669;
             margin-bottom: 1.4rem;
-            box-shadow: 0 2px 10px rgba(5, 150, 105, 0.06);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.16);
         }
         .exec-header h1 {
-            color: #064E3B !important;
+            color: #FFFFFF !important;
             font-size: 1.85rem;
             font-weight: 800;
             margin: 0;
         }
         .exec-header p {
-            color: #047857 !important;
+            color: #DBEAFE !important;
             font-size: 0.96rem;
             margin: 0.4rem 0 0 0;
             font-weight: 500;
         }
 
-        /* Interactive Light KPI Cards with Hover Details */
+        /* High-Visibility Interactive KPI Cards */
         .kpi-card {
             background: #FFFFFF;
-            border: 1px solid #E2E8F0;
-            border-top: 4px solid #10B981;
+            border: 1px solid #CBD5E1;
+            border-top: 4px solid #2563EB;
             border-radius: 12px;
-            padding: 1.1rem 1.25rem;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            padding: 1.15rem 1.25rem;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
             transition: all 0.25s ease;
             cursor: pointer;
-            min-height: 125px;
+            min-height: 126px;
         }
         .kpi-card:hover {
             transform: translateY(-4px);
-            border-color: #10B981;
-            background-color: #F0FDF4;
-            box-shadow: 0 10px 22px rgba(16, 185, 129, 0.14);
+            border-color: #2563EB;
+            background-color: #EFF6FF;
+            box-shadow: 0 10px 22px rgba(37, 99, 235, 0.15);
         }
         .kpi-label {
             font-size: 0.8rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-            color: #64748B;
+            color: #475569;
             margin-bottom: 0.35rem;
         }
         .kpi-value {
@@ -157,20 +155,21 @@ st.markdown(
         }
         .kpi-hint {
             font-size: 0.76rem;
-            color: #059669;
+            color: #2563EB;
             margin-top: 0.4rem;
-            font-weight: 500;
+            font-weight: 600;
         }
         .kpi-detail-box {
             max-height: 0;
             opacity: 0;
             overflow: hidden;
             transition: all 0.28s ease;
-            font-size: 0.81rem;
-            color: #064E3B;
-            background: #DCFCE7;
+            font-size: 0.82rem;
+            color: #1E3A8A;
+            background: #DBEAFE;
             border-radius: 6px;
             padding: 0 0.6rem;
+            font-weight: 500;
         }
         .kpi-card:hover .kpi-detail-box {
             max-height: 95px;
@@ -182,35 +181,38 @@ st.markdown(
             display: none;
         }
 
+        /* Chart Explanation Pill */
+        .chart-note {
+            background-color: #EFF6FF;
+            border-left: 4px solid #2563EB;
+            padding: 0.6rem 0.9rem;
+            border-radius: 6px;
+            font-size: 0.86rem;
+            color: #1E3A8A;
+            margin-top: -0.4rem;
+            margin-bottom: 1.2rem;
+            font-weight: 500;
+        }
+
         /* Tutorial Box */
         .tutorial-box {
             background-color: #FFFFFF;
-            border: 1px solid #BAE6FD;
-            border-left: 5px solid #0284C7;
+            border: 1px solid #93C5FD;
+            border-left: 5px solid #2563EB;
             border-radius: 12px;
             padding: 1.15rem 1.4rem;
             margin-bottom: 1.2rem;
-            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.06);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
         }
         .tutorial-box h4 {
             margin: 0 0 0.45rem 0;
-            color: #0369A1;
+            color: #1E3A8A;
             font-weight: 700;
         }
 
-        /* SWOT Cards */
-        .swot-card {
-            background: #FFFFFF;
-            border: 1px solid #E2E8F0;
-            border-radius: 12px;
-            padding: 1.2rem 1.4rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
-        }
-
-        /* Clean Emerald Buttons */
+        /* Royal Blue Primary Buttons */
         .stButton > button, .stDownloadButton > button {
-            background-color: #059669 !important;
+            background-color: #2563EB !important;
             color: #FFFFFF !important;
             border: none !important;
             border-radius: 8px !important;
@@ -218,7 +220,7 @@ st.markdown(
             padding: 0.5rem 1.2rem !important;
         }
         .stButton > button:hover, .stDownloadButton > button:hover {
-            background-color: #047857 !important;
+            background-color: #1D4ED8 !important;
         }
     </style>
     """,
@@ -445,7 +447,6 @@ def generate_comprehensive_swot(df: pd.DataFrame) -> dict:
     rating_metric = find_column(df, ["rating", "score", "review", "satisfaction"], numeric_only=True)
     share_metric = find_column(df, ["share", "monthly_sales", "quantity", "volume", "units"], numeric_only=True)
 
-    # Aggregate by main category/competitor if available
     if cat_col and primary_metric:
         agg_dict = {primary_metric: ["mean", "sum", "min", "max", "count"]}
         if rating_metric and rating_metric != primary_metric:
@@ -475,7 +476,6 @@ def generate_comprehensive_swot(df: pd.DataFrame) -> dict:
         top2_share_pct = (grouped.head(2)[sum_col].sum() / overall_sum * 100) if overall_sum else 0
         price_spread = highest_avg_player[mean_col] - lowest_avg_player[mean_col]
 
-        rating_insight = ""
         if rating_metric and f"{rating_metric}_mean" in grouped.columns:
             r_col = f"{rating_metric}_mean"
             best_rated = grouped.loc[grouped[r_col].idxmax()]
@@ -485,8 +485,8 @@ def generate_comprehensive_swot(df: pd.DataFrame) -> dict:
             rating_insight = f"Dataset tracks **{len(num_cols)} quantitative KPIs** and **{len(cat_cols)} categorical dimensions** across **{total_rows:,} records**."
 
         strengths = [
-            f"**Clear Market Dominance by {top_player[cat_col]}:** Leads the dataset with **PKR {top_player[sum_col]:,.0f}** in total {primary_metric} (**{top_share_pct:.1f}%** of total market volume across {int(top_player[cnt_col]):,} records).",
-            f"**Strong Benchmark Baseline:** Overall market average for {primary_metric} stands at **PKR {overall_avg:,.2f}** (Median: **PKR {overall_median:,.2f}**), establishing a reliable performance threshold.",
+            f"**Clear Market Dominance by {top_player[cat_col]}:** Leads with **PKR {top_player[sum_col]:,.0f}** in total {primary_metric} (**{top_share_pct:.1f}%** of total market volume across {int(top_player[cnt_col]):,} records).",
+            f"**Strong Benchmark Baseline:** Overall market average for {primary_metric} is **PKR {overall_avg:,.2f}** (Median: **PKR {overall_median:,.2f}**), establishing a clear performance threshold.",
             f"**Quality & Satisfaction Leadership:** {rating_insight}",
             f"**Multi-Segment Breadth:** Covers **{grouped[cat_col].nunique()} distinct competitors/segments** ({', '.join(grouped[cat_col].astype(str).head(5).tolist())}), enabling accurate cross-segment benchmarking.",
         ]
@@ -495,13 +495,13 @@ def generate_comprehensive_swot(df: pd.DataFrame) -> dict:
             f"**High Revenue/Volume Concentration:** The top 2 players (**{', '.join(grouped[cat_col].astype(str).head(2).tolist())}** ) control **{top2_share_pct:.1f}%** of total {primary_metric}, leaving remaining segments under-monetized.",
             f"**Lagging Tail Performance ({bottom_player[cat_col]}):** Contributes only **PKR {bottom_player[sum_col]:,.0f}** (**{(bottom_player[sum_col]/overall_sum*100) if overall_sum else 0:.1f}%** share), indicating weak customer pull or distribution gaps.",
             f"**Wide Pricing / Value Dispersion:** A **PKR {price_spread:,.2f}** gap separates highest-priced **{highest_avg_player[cat_col]}** (avg **PKR {highest_avg_player[mean_col]:,.0f}**) from budget leader **{lowest_avg_player[cat_col]}** (avg **PKR {lowest_avg_player[mean_col]:,.0f}**).",
-            f"**High Volatility Across Transactions:** Standard deviation of **PKR {overall_std:,.2f}** shows inconsistent order sizes rather than predictable recurring volume.",
+            f"**High Volatility Across Transactions:** Standard deviation of **PKR {overall_std:,.2f}** shows uneven order sizes rather than predictable recurring volume.",
         ]
 
         opportunities = [
             f"**Capture the Mid-Market Corridor (PKR {lowest_avg_player[mean_col]:,.0f} – PKR {overall_avg:,.0f}):** Position value-bundled offers slightly below the **PKR {overall_avg:,.0f}** average to win price-sensitive buyers from **{highest_avg_player[cat_col]}**.",
-            f"**Replicate {top_player[cat_col]}'s Playbook in Mid-Tier Segments:** Scaling top-performing product/pricing strategies into lower-share segments can unlock an estimated **15%–25% uplift** in total {primary_metric}.",
-            f"**Premium Upsell Above Median (PKR {overall_median:,.0f}):** Customers already purchasing above the median threshold represent prime targets for extended warranties, loyalty tiers, and cross-selling.",
+            f"**Replicate {top_player[cat_col]}'s Playbook in Mid-Tier Segments:** Scaling top-performing strategies into lower-share segments can unlock an estimated **15%–25% uplift** in total {primary_metric}.",
+            f"**Premium Upsell Above Median (PKR {overall_median:,.0f}):** Customers buying above the median threshold are prime targets for extended warranties, loyalty tiers, and cross-selling.",
             f"**Data-Driven SKU & Regional Optimization:** Eliminating bottom-decile underperformers and reallocating budget toward high-velocity segments directly improves net margins.",
         ]
 
@@ -513,7 +513,7 @@ def generate_comprehensive_swot(df: pd.DataFrame) -> dict:
         ]
 
         actions = [
-            f"**1. Immediate Pricing Calibration (0–30 Days):** Anchor core offerings near **PKR {overall_avg:,.0f}** (market average) while introducing an entry-level fighter SKU around **PKR {lowest_avg_player[mean_col]:,.0f}** to counter budget rivals.",
+            f"**1. Immediate Pricing Calibration (0–30 Days):** Anchor core offerings near **PKR {overall_avg:,.0f}** (market average) while introducing an entry-level SKU around **PKR {lowest_avg_player[mean_col]:,.0f}** to counter budget rivals.",
             f"**2. Defend & Expand Leader Segment ({top_player[cat_col]}):** Allocate priority retention marketing to protect the **{top_share_pct:.1f}%** core share while bundling high-margin add-ons.",
             f"**3. Turnaround Plan for {bottom_player[cat_col]} (30–60 Days):** Audit why **{bottom_player[cat_col]}** trails at **PKR {bottom_player[sum_col]:,.0f}**—either reposition with targeted promotions or reallocate resources to top-3 segments.",
             f"**4. Automated Weekly KPI & Competitor Web Audits (Ongoing):** Track shifts against the **PKR {overall_median:,.0f}** median benchmark and monitor rival website changes via the Live Web Intelligence module.",
@@ -583,7 +583,7 @@ def analyze_competitor_url(url: str) -> dict:
     }
 
 
-# --- SIDEBAR (MULTIPLE FILES + PERSISTENT ACCOUNT) ---
+# --- SIDEBAR (WHITE & CLEAN) ---
 with st.sidebar:
     st.markdown(f"### :material/account_circle: {st.session_state.display_name}")
     st.caption(f"Logged in as `@{st.session_state.current_user}`")
@@ -600,7 +600,7 @@ with st.sidebar:
             st.rerun()
 
     st.divider()
-    st.markdown("### :material/folder_open: Upload Multiple Datasets")
+    st.markdown("### :material/folder_open: Upload Datasets")
     uploaded_files = st.file_uploader(
         "Upload 1 or More CSV / Excel Files",
         type=["csv", "xlsx"],
@@ -622,14 +622,14 @@ with st.sidebar:
         if dfs:
             df = pd.concat(dfs, ignore_index=True)
             file_label = f"{len(loaded_names)} File(s): {', '.join(loaded_names)}"
-            st.success(f"Loaded {len(loaded_names)} file(s) ({len(df):,} total rows)")
+            st.success(f"Loaded {len(loaded_names)} file(s) ({len(df):,} rows)")
         else:
             df = load_sample_data()
             file_label = "Default Benchmark"
     else:
         df = load_sample_data()
         file_label = "Default Benchmark"
-        st.info("Using Default Benchmark Data")
+        st.info("Showing Default Benchmark Data")
 
     sample_csv = load_sample_data().to_csv(index=False).encode("utf-8")
     st.download_button(
@@ -642,12 +642,12 @@ with st.sidebar:
     )
 
 
-# --- MAIN LIGHT EXECUTIVE DASHBOARD ---
+# --- MAIN BLUE & WHITE EXECUTIVE DASHBOARD ---
 st.markdown(
     """
     <div class="exec-header">
         <h1>AI-Powered Competitor Intelligence & Market Analysis</h1>
-        <p>Multi-File Benchmarking, Clear Visual Analytics, Deep SWOT Synthesis & Live Web Intelligence</p>
+        <p>Clear Visual Benchmarking, Distinct Metric Graphs & Strategic SWOT Insights</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -658,12 +658,12 @@ if st.session_state.show_tutorial:
     st.markdown(
         """
         <div class="tutorial-box">
-            <h4>Quick Guide — Platform Capabilities</h4>
-            <ul style="margin:0; padding-left:1.2rem; color:#334155; font-size:0.92rem; line-height:1.6;">
-                <li><strong>1. Upload Multiple Files (Left Sidebar):</strong> Select one or several CSV/Excel files at once to merge and compare them side-by-side.</li>
-                <li><strong>2. Hover on KPI Cards:</strong> Move your cursor over any KPI card below to reveal minimum, maximum, and total breakdowns.</li>
-                <li><strong>3. Easy-to-Read Graphs:</strong> Every chart shows exact numbers on bars/slices and a red Market Average line for instant comparison.</li>
-                <li><strong>4. Comprehensive SWOT & Multi-URL Web Intelligence:</strong> Generate a full data-backed SWOT report or compare multiple live competitor websites at once.</li>
+            <h4>Quick Guide — Easy 4-Step Overview</h4>
+            <ul style="margin:0; padding-left:1.2rem; color:#1E293B; font-size:0.92rem; line-height:1.6;">
+                <li><strong>1. Upload Files (Left Sidebar):</strong> Upload single or multiple CSV/Excel files to merge and analyze automatically.</li>
+                <li><strong>2. Hover on KPI Cards:</strong> Move your cursor over any blue-accented KPI card below to inspect exact min, max, and total details.</li>
+                <li><strong>3. Four Distinct Graphs:</strong> Each graph below reveals a different insight — <em>(1) Price/Value, (2) Rating/Quality, (3) Market Share %, and (4) Sales vs. Price Positioning</em>.</li>
+                <li><strong>4. SWOT & Live Web Intelligence:</strong> Generate a complete SWOT report or compare multiple live competitor websites side-by-side.</li>
             </ul>
         </div>
         """,
@@ -695,192 +695,238 @@ st.divider()
 # --- NAVIGATION TABS ---
 tab_overview, tab_swot, tab_scraper = st.tabs(
     [
-        ":material/monitoring: Clear Market Graphs & Scorecard",
+        ":material/monitoring: Distinct Visual Graphs & Scorecard",
         ":material/psychology: Comprehensive SWOT Analysis",
         ":material/language: Live Web Intelligence",
     ]
 )
 
-# --- TAB 1: CRYSTAL-CLEAR & DETAILED GRAPHS ---
+# --- TAB 1: 4 DISTINCT, CRYSTAL-CLEAR GRAPHS (EACH TELLS ITS OWN STORY) ---
 with tab_overview:
-    cat_options = [
-        c for c in df.select_dtypes(exclude="number").columns.tolist()
-    ]
+    cat_options = df.select_dtypes(exclude="number").columns.tolist()
     default_cat = find_column(
         df, ["competitor", "brand", "product", "category", "territory", "country", "source_file", "name"], numeric_only=False
     )
     num_cols = df.select_dtypes(include="number").columns.tolist()
-    default_val = find_column(df, ["price", "salesamount", "amount", "sales", "revenue"], numeric_only=True)
 
-    c_head, c_cat, c_met = st.columns([1.6, 1, 1])
+    # Automatically assign distinct roles to available numeric columns so every chart shows something DIFFERENT
+    price_col = find_column(df, ["price", "cost", "unitprice", "amount", "salesamount", "revenue"], numeric_only=True)
+    rating_col = find_column(df, ["rating", "score", "review", "satisfaction"], numeric_only=True)
+    share_col = find_column(df, ["market_share", "share", "salesamount", "revenue", "sales", "price"], numeric_only=True)
+    volume_col = find_column(df, ["monthly_sales", "sales", "quantity", "volume", "units", "revenue"], numeric_only=True)
+
+    # Fallbacks if dataset has generic numeric columns
+    if len(num_cols) >= 2 and rating_col == price_col:
+        rating_col = [c for c in num_cols if c != price_col][0]
+    if len(num_cols) >= 3 and volume_col in [price_col, rating_col]:
+        rem = [c for c in num_cols if c not in [price_col, rating_col]]
+        volume_col = rem[0] if rem else num_cols[-1]
+
+    c_head, c_cat = st.columns([2.2, 1])
     with c_head:
-        st.subheader(":material/analytics: Visual Market & Competitor Breakdown")
-        st.caption("Every chart displays exact values and market averages so anyone can understand trends immediately.")
+        st.subheader(":material/analytics: Competitor & Market Visual Intelligence")
+        st.caption("Each chart below highlights a unique dimension so you can read pricing, quality, market share, and sales volume at a glance.")
     with c_cat:
         selected_cat = (
             st.selectbox(
-                "Group / Compare By:",
+                "Compare By Category / Competitor:",
                 options=cat_options,
                 index=cat_options.index(default_cat) if default_cat in cat_options else 0,
             )
             if cat_options
             else None
         )
-    with c_met:
-        selected_metric = (
-            st.selectbox(
-                "Metric to Analyze:",
-                options=num_cols,
-                index=num_cols.index(default_val) if default_val in num_cols else 0,
-            )
-            if num_cols
-            else None
-        )
 
-    light_palette = ["#059669", "#0284C7", "#D97706", "#7C3AED", "#E11D48", "#0D9488", "#2563EB", "#4F46E5"]
+    blue_palette = ["#1D4ED8", "#0284C7", "#3B82F6", "#0EA5E9", "#6366F1", "#1E40AF", "#38BDF8"]
 
-    if selected_cat and selected_metric:
-        summary_df = (
-            df.groupby(selected_cat, as_index=False)
-            .agg(
-                Average_Value=(selected_metric, "mean"),
-                Total_Value=(selected_metric, "sum"),
-                Min_Value=(selected_metric, "min"),
-                Max_Value=(selected_metric, "max"),
-                Records=(selected_metric, "count"),
-            )
-            .sort_values("Total_Value", ascending=False)
-            .head(12)
-        )
-        overall_avg = summary_df["Average_Value"].mean()
-        total_sum = summary_df["Total_Value"].sum()
-        summary_df["Share_%"] = (summary_df["Total_Value"] / total_sum * 100).round(2) if total_sum else 0
-        summary_df["Diff_From_Avg_%"] = (
-            ((summary_df["Average_Value"] - overall_avg) / overall_avg * 100).round(1) if overall_avg else 0
-        )
+    if selected_cat and num_cols:
+        # Build clean aggregated summary across all distinct metrics
+        agg_spec = {}
+        for col in set([c for c in [price_col, rating_col, share_col, volume_col] if c]):
+            agg_spec[col] = "mean" if col in [price_col, rating_col] else "sum"
 
-        # ROW 1: Clear Bar Chart with Exact Labels + Market Share Donut
-        g1, g2 = st.columns([1.35, 1])
+        summary_df = df.groupby(selected_cat, as_index=False).agg(agg_spec).head(12)
+
+        # ROW 1: Graph 1 (Pricing Comparison) + Graph 2 (Customer Rating / Quality Ranking)
+        g1, g2 = st.columns(2)
 
         with g1:
-            fig_bar = px.bar(
-                summary_df,
-                x=selected_cat,
-                y="Average_Value",
-                text="Average_Value",
-                color=selected_cat,
-                title=f"1. Average {selected_metric} by {selected_cat} (Exact Values & Market Average)",
-                labels={"Average_Value": f"Avg {selected_metric}", selected_cat: selected_cat},
-                color_discrete_sequence=light_palette,
-                hover_data={"Total_Value": ":,.0f", "Min_Value": ":,.0f", "Max_Value": ":,.0f", "Share_%": ":.1f"},
-            )
-            fig_bar.update_traces(texttemplate="%{text:,.1f}", textposition="outside")
-            fig_bar.add_hline(
-                y=overall_avg,
-                line_dash="dash",
-                line_color="#DC2626",
-                annotation_text=f"Market Avg: {overall_avg:,.1f}",
-                annotation_position="top right",
-            )
-            fig_bar.update_layout(
-                showlegend=False,
-                plot_bgcolor="#FFFFFF",
-                paper_bgcolor="#FFFFFF",
-                font=dict(color="#1E293B"),
-                yaxis=dict(gridcolor="#F1F5F9"),
-                margin=dict(t=55, b=30),
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
+            if price_col:
+                p_df = summary_df.sort_values(price_col, ascending=False)
+                avg_p = p_df[price_col].mean()
+                fig_price = px.bar(
+                    p_df,
+                    x=selected_cat,
+                    y=price_col,
+                    text=price_col,
+                    color=selected_cat,
+                    title=f"1. Pricing Comparison: Average {price_col}",
+                    color_discrete_sequence=blue_palette,
+                )
+                fig_price.update_traces(texttemplate="%{text:,.1f}", textposition="outside")
+                fig_price.add_hline(
+                    y=avg_p,
+                    line_dash="dash",
+                    line_color="#DC2626",
+                    annotation_text=f"Market Avg: {avg_p:,.1f}",
+                    annotation_position="top right",
+                )
+                fig_price.update_layout(
+                    showlegend=False,
+                    plot_bgcolor="#FFFFFF",
+                    paper_bgcolor="#FFFFFF",
+                    font=dict(color="#0F172A"),
+                    yaxis=dict(gridcolor="#E2E8F0"),
+                    margin=dict(t=55, b=20),
+                )
+                st.plotly_chart(fig_price, use_container_width=True)
+                highest_p = p_df.iloc[0]
+                lowest_p = p_df.iloc[-1]
+                st.markdown(
+                    f"<div class='chart-note'><b>Pricing Insight:</b> <b>{highest_p[selected_cat]}</b> is highest ({highest_p[price_col]:,.1f}), while <b>{lowest_p[selected_cat]}</b> offers the lowest entry ({lowest_p[price_col]:,.1f}) against market average {avg_p:,.1f}.</div>",
+                    unsafe_allow_html=True,
+                )
 
         with g2:
-            fig_pie = px.pie(
-                summary_df,
-                names=selected_cat,
-                values="Total_Value",
-                hole=0.42,
-                title=f"2. Total {selected_metric} Share (%)",
-                color_discrete_sequence=light_palette,
-            )
-            fig_pie.update_traces(
-                textposition="inside",
-                textinfo="percent+label",
-                hovertemplate="<b>%{label}</b><br>Total: %{value:,.0f}<br>Share: %{percent}<extra></extra>",
-            )
-            fig_pie.update_layout(
-                paper_bgcolor="#FFFFFF",
-                font=dict(color="#1E293B"),
-                margin=dict(t=55, b=30),
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
+            if rating_col and rating_col != price_col:
+                r_df = summary_df.sort_values(rating_col, ascending=True)
+                avg_r = r_df[rating_col].mean()
+                fig_rating = px.bar(
+                    r_df,
+                    x=rating_col,
+                    y=selected_cat,
+                    orientation="h",
+                    text=rating_col,
+                    color=rating_col,
+                    color_continuous_scale="Blues",
+                    title=f"2. Quality & Satisfaction Ranking: {rating_col}",
+                )
+                fig_rating.update_traces(texttemplate="%{text:,.2f}", textposition="outside")
+                fig_rating.add_vline(
+                    x=avg_r,
+                    line_dash="dash",
+                    line_color="#DC2626",
+                    annotation_text=f"Avg: {avg_r:,.2f}",
+                    annotation_position="top right",
+                )
+                fig_rating.update_layout(
+                    plot_bgcolor="#FFFFFF",
+                    paper_bgcolor="#FFFFFF",
+                    font=dict(color="#0F172A"),
+                    xaxis=dict(gridcolor="#E2E8F0"),
+                    margin=dict(t=55, b=20),
+                )
+                st.plotly_chart(fig_rating, use_container_width=True)
+                top_r = r_df.iloc[-1]
+                st.markdown(
+                    f"<div class='chart-note'><b>Quality Insight:</b> <b>{top_r[selected_cat]}</b> leads in {rating_col} with <b>{top_r[rating_col]:,.2f}</b> (Market Average: {avg_r:,.2f}).</div>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                # Fallback if dataset only has 1 numeric column: show Record Count per category
+                cnt_df = df[selected_cat].value_counts().reset_index().head(10)
+                cnt_df.columns = [selected_cat, "Transaction_Count"]
+                fig_cnt = px.bar(
+                    cnt_df,
+                    x="Transaction_Count",
+                    y=selected_cat,
+                    orientation="h",
+                    text="Transaction_Count",
+                    title=f"2. Activity Volume: Records per {selected_cat}",
+                    color_discrete_sequence=["#0284C7"],
+                )
+                fig_cnt.update_traces(texttemplate="%{text:,}", textposition="outside")
+                fig_cnt.update_layout(plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF", font=dict(color="#0F172A"))
+                st.plotly_chart(fig_cnt, use_container_width=True)
+                st.markdown(
+                    f"<div class='chart-note'><b>Volume Insight:</b> Shows total number of records/orders recorded under each {selected_cat}.</div>",
+                    unsafe_allow_html=True,
+                )
 
-        # ROW 2: Horizontal Total Volume Ranking + Strategic Quadrant / Multi-Metric Chart
+        # ROW 2: Graph 3 (Market Share % ONLY Here) + Graph 4 (Sales Volume vs. Price Positioning)
         g3, g4 = st.columns(2)
 
         with g3:
-            ranked_df = summary_df.sort_values("Total_Value", ascending=True)
-            fig_hbar = px.bar(
-                ranked_df,
-                x="Total_Value",
-                y=selected_cat,
-                orientation="h",
-                text="Total_Value",
-                color="Share_%",
-                color_continuous_scale="Tealgrn",
-                title=f"3. Total Cumulative {selected_metric} Ranking (Lowest to Highest)",
-                labels={"Total_Value": f"Total {selected_metric}", selected_cat: selected_cat},
-            )
-            fig_hbar.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
-            fig_hbar.update_layout(
-                plot_bgcolor="#FFFFFF",
-                paper_bgcolor="#FFFFFF",
-                font=dict(color="#1E293B"),
-                xaxis=dict(gridcolor="#F1F5F9"),
-            )
-            st.plotly_chart(fig_hbar, use_container_width=True)
+            if share_col:
+                s_df = summary_df.sort_values(share_col, ascending=False)
+                fig_share = px.pie(
+                    s_df,
+                    names=selected_cat,
+                    values=share_col,
+                    hole=0.45,
+                    title=f"3. Market Share Breakdown (% of Total {share_col})",
+                    color_discrete_sequence=blue_palette,
+                )
+                fig_share.update_traces(
+                    textposition="inside",
+                    textinfo="percent+label",
+                    hovertemplate="<b>%{label}</b><br>Value: %{value:,.0f}<br>Market Share: %{percent}<extra></extra>",
+                )
+                fig_share.update_layout(
+                    paper_bgcolor="#FFFFFF",
+                    font=dict(color="#0F172A"),
+                    margin=dict(t=55, b=20),
+                )
+                st.plotly_chart(fig_share, use_container_width=True)
+                top_s = s_df.iloc[0]
+                tot_s = s_df[share_col].sum()
+                pct_s = (top_s[share_col] / tot_s * 100) if tot_s else 0
+                st.markdown(
+                    f"<div class='chart-note'><b>Market Share Insight:</b> <b>{top_s[selected_cat]}</b> holds the largest slice at <b>{pct_s:.1f}%</b> of total {share_col}.</div>",
+                    unsafe_allow_html=True,
+                )
 
         with g4:
-            if len(num_cols) >= 2:
-                x_col = num_cols[0]
-                y_col = num_cols[1]
-                scatter_df = df.head(500).copy()
-                fig_quad = px.scatter(
-                    scatter_df,
-                    x=x_col,
-                    y=y_col,
+            if price_col and volume_col and price_col != volume_col:
+                fig_pos = px.scatter(
+                    summary_df,
+                    x=price_col,
+                    y=volume_col,
+                    size=share_col if share_col and (summary_df[share_col] > 0).all() else None,
                     color=selected_cat,
-                    title=f"4. Positioning Matrix: {x_col} vs. {y_col} (with Market Avg Lines)",
-                    color_discrete_sequence=light_palette,
-                    hover_data=num_cols[:4],
+                    text=selected_cat,
+                    title=f"4. Price vs. {volume_col} Strategic Positioning",
+                    color_discrete_sequence=blue_palette,
                 )
-                fig_quad.add_vline(x=scatter_df[x_col].mean(), line_dash="dot", line_color="#94A3B8")
-                fig_quad.add_hline(y=scatter_df[y_col].mean(), line_dash="dot", line_color="#94A3B8")
-                fig_quad.update_layout(
+                fig_pos.update_traces(textposition="top center")
+                fig_pos.add_vline(x=summary_df[price_col].mean(), line_dash="dot", line_color="#94A3B8")
+                fig_pos.add_hline(y=summary_df[volume_col].mean(), line_dash="dot", line_color="#94A3B8")
+                fig_pos.update_layout(
+                    showlegend=False,
                     plot_bgcolor="#FFFFFF",
                     paper_bgcolor="#FFFFFF",
-                    font=dict(color="#1E293B"),
-                    xaxis=dict(gridcolor="#F1F5F9"),
-                    yaxis=dict(gridcolor="#F1F5F9"),
+                    font=dict(color="#0F172A"),
+                    xaxis=dict(gridcolor="#E2E8F0"),
+                    yaxis=dict(gridcolor="#E2E8F0"),
+                    margin=dict(t=55, b=20),
                 )
-                st.plotly_chart(fig_quad, use_container_width=True)
+                st.plotly_chart(fig_pos, use_container_width=True)
+                st.markdown(
+                    f"<div class='chart-note'><b>Positioning Insight:</b> Top-left players achieve high <b>{volume_col}</b> at lower <b>{price_col}</b> (best value); top-right players command premium pricing with strong volume.</div>",
+                    unsafe_allow_html=True,
+                )
             else:
-                fig_box = px.box(
+                fig_dist = px.histogram(
                     df,
-                    x=selected_cat,
-                    y=selected_metric,
-                    color=selected_cat,
-                    title=f"4. Min, Median & Max Spread of {selected_metric}",
-                    color_discrete_sequence=light_palette,
+                    x=price_col or num_cols[0],
+                    nbins=20,
+                    title=f"4. Value Distribution of {price_col or num_cols[0]}",
+                    color_discrete_sequence=["#2563EB"],
                 )
-                fig_box.update_layout(showlegend=False, plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF")
-                st.plotly_chart(fig_box, use_container_width=True)
+                fig_dist.update_layout(plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF", font=dict(color="#0F172A"))
+                st.plotly_chart(fig_dist, use_container_width=True)
+                st.markdown(
+                    "<div class='chart-note'><b>Distribution Insight:</b> Shows where most transactions or prices are concentrated across your dataset.</div>",
+                    unsafe_allow_html=True,
+                )
 
-        # ROW 3: Full Performance Scorecard Table
-        st.subheader(":material/leaderboard: Complete Competitor & Segment Scorecard")
+        # ROW 3: Complete Scorecard Table
+        st.subheader(":material/leaderboard: Unified Competitor & Segment Scorecard")
         scorecard = summary_df.copy()
+        if share_col and scorecard[share_col].sum() > 0:
+            scorecard["Market_Share_%"] = (scorecard[share_col] / scorecard[share_col].sum() * 100).round(2)
+            scorecard = scorecard.sort_values("Market_Share_%", ascending=False)
         scorecard.insert(0, "Rank", range(1, len(scorecard) + 1))
-        scorecard["Market_Position"] = scorecard["Diff_From_Avg_%"].apply(
-            lambda x: "Above Market Avg" if x > 0 else ("At Market Avg" if x == 0 else "Below Market Avg")
-        )
         st.dataframe(scorecard, use_container_width=True, hide_index=True)
 
     st.divider()
@@ -946,7 +992,6 @@ with tab_scraper:
                         st.error(f"Could not access {u}: {e}")
 
             if results:
-                # Side-by-side comparison table
                 comp_table = pd.DataFrame(
                     [
                         {
@@ -964,7 +1009,6 @@ with tab_scraper:
                 st.markdown("### :material/compare_arrows: Live Competitor Web Comparison Matrix")
                 st.dataframe(comp_table, use_container_width=True, hide_index=True)
 
-                # Detailed breakdown per website
                 for r in results:
                     with st.expander(f"Detailed Intelligence Brief — {r['brand']} ({r['url']})", expanded=True):
                         st.markdown(f"**Core Positioning (Meta Description):** {r['meta_desc']}")
