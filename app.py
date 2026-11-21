@@ -78,155 +78,6 @@ def verify_user(username: str, password: str) -> tuple[bool, str]:
 
 init_db()
 
-# --- CRISP ROYAL BLUE & PURE WHITE HIGH-VISIBILITY THEME ---
-st.markdown(
-    """
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-        html, body, [class*="css"] {
-            font-family: 'Inter', sans-serif;
-            color: #0F172A;
-        }
-        .stApp {
-            background-color: #F4F7FB;
-            color: #0F172A;
-        }
-        [data-testid="stSidebar"] {
-            background-color: #FFFFFF;
-            border-right: 1px solid #CBD5E1;
-        }
-        [data-testid="stSidebar"] * {
-            color: #0F172A !important;
-        }
-
-        /* High-Contrast Blue & White Executive Banner */
-        .exec-header {
-            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-            padding: 1.65rem 2rem;
-            border-radius: 14px;
-            margin-bottom: 1.4rem;
-            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.16);
-        }
-        .exec-header h1 {
-            color: #FFFFFF !important;
-            font-size: 1.85rem;
-            font-weight: 800;
-            margin: 0;
-        }
-        .exec-header p {
-            color: #DBEAFE !important;
-            font-size: 0.96rem;
-            margin: 0.4rem 0 0 0;
-            font-weight: 500;
-        }
-
-        /* High-Visibility Interactive KPI Cards */
-        .kpi-card {
-            background: #FFFFFF;
-            border: 1px solid #CBD5E1;
-            border-top: 4px solid #2563EB;
-            border-radius: 12px;
-            padding: 1.15rem 1.25rem;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-            transition: all 0.25s ease;
-            cursor: pointer;
-            min-height: 126px;
-        }
-        .kpi-card:hover {
-            transform: translateY(-4px);
-            border-color: #2563EB;
-            background-color: #EFF6FF;
-            box-shadow: 0 10px 22px rgba(37, 99, 235, 0.15);
-        }
-        .kpi-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #475569;
-            margin-bottom: 0.35rem;
-        }
-        .kpi-value {
-            font-size: 1.55rem;
-            font-weight: 800;
-            color: #0F172A;
-            line-height: 1.2;
-        }
-        .kpi-hint {
-            font-size: 0.76rem;
-            color: #2563EB;
-            margin-top: 0.4rem;
-            font-weight: 600;
-        }
-        .kpi-detail-box {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: all 0.28s ease;
-            font-size: 0.82rem;
-            color: #1E3A8A;
-            background: #DBEAFE;
-            border-radius: 6px;
-            padding: 0 0.6rem;
-            font-weight: 500;
-        }
-        .kpi-card:hover .kpi-detail-box {
-            max-height: 95px;
-            opacity: 1;
-            padding: 0.45rem 0.65rem;
-            margin-top: 0.5rem;
-        }
-        .kpi-card:hover .kpi-hint {
-            display: none;
-        }
-
-        /* Chart Explanation Pill */
-        .chart-note {
-            background-color: #EFF6FF;
-            border-left: 4px solid #2563EB;
-            padding: 0.6rem 0.9rem;
-            border-radius: 6px;
-            font-size: 0.86rem;
-            color: #1E3A8A;
-            margin-top: -0.4rem;
-            margin-bottom: 1.2rem;
-            font-weight: 500;
-        }
-
-        /* Tutorial Box */
-        .tutorial-box {
-            background-color: #FFFFFF;
-            border: 1px solid #93C5FD;
-            border-left: 5px solid #2563EB;
-            border-radius: 12px;
-            padding: 1.15rem 1.4rem;
-            margin-bottom: 1.2rem;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
-        }
-        .tutorial-box h4 {
-            margin: 0 0 0.45rem 0;
-            color: #1E3A8A;
-            font-weight: 700;
-        }
-
-        /* Royal Blue Primary Buttons */
-        .stButton > button, .stDownloadButton > button {
-            background-color: #2563EB !important;
-            color: #FFFFFF !important;
-            border: none !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            padding: 0.5rem 1.2rem !important;
-        }
-        .stButton > button:hover, .stDownloadButton > button:hover {
-            background-color: #1D4ED8 !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 # --- SESSION STATE INITIALIZATION ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -236,6 +87,236 @@ if "display_name" not in st.session_state:
     st.session_state.display_name = ""
 if "show_tutorial" not in st.session_state:
     st.session_state.show_tutorial = True
+if "theme_mode" not in st.session_state:
+    st.session_state.theme_mode = "Light"
+if "accent_name" not in st.session_state:
+    st.session_state.accent_name = "Royal Indigo"
+
+ACCENT_PRESETS = {
+    "Royal Indigo": {"primary": "#4F46E5", "hover": "#4338CA", "soft_light": "#EEF2FF", "soft_dark": "#1E1B4B"},
+    "Emerald Teal": {"primary": "#0D9488", "hover": "#0F766E", "soft_light": "#F0FDFA", "soft_dark": "#134E4A"},
+    "Crimson Rose": {"primary": "#E11D48", "hover": "#BE123C", "soft_light": "#FFF1F2", "soft_dark": "#4C0519"},
+    "Amber Gold": {"primary": "#D97706", "hover": "#B45309", "soft_light": "#FFFBEB", "soft_dark": "#451A03"},
+    "Ocean Cyan": {"primary": "#0284C7", "hover": "#0369A1", "soft_light": "#F0F9FF", "soft_dark": "#082F49"},
+}
+
+
+def apply_dynamic_theme():
+    is_dark = st.session_state.theme_mode == "Dark"
+    accent = ACCENT_PRESETS.get(st.session_state.accent_name, ACCENT_PRESETS["Royal Indigo"])
+    primary = accent["primary"]
+    hover = accent["hover"]
+
+    if is_dark:
+        bg_main = "#0B1120"
+        bg_card = "#111827"
+        bg_sidebar = "#0F172A"
+        text_primary = "#F8FAFC"
+        text_secondary = "#CBD5E1"
+        border_color = "#334155"
+        soft_bg = accent["soft_dark"]
+        chart_note_text = "#F1F5F9"
+    else:
+        bg_main = "#F8FAFC"
+        bg_card = "#FFFFFF"
+        bg_sidebar = "#FFFFFF"
+        text_primary = "#0F172A"
+        text_secondary = "#475569"
+        border_color = "#CBD5E1"
+        soft_bg = accent["soft_light"]
+        chart_note_text = "#0F172A"
+
+    st.markdown(
+        f"""
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+            html, body, [class*="css"] {{
+                font-family: 'Plus Jakarta Sans', sans-serif;
+            }}
+            .stApp {{
+                background-color: {bg_main};
+                color: {text_primary};
+            }}
+            /* Ensure ALL headings, labels, markdown, captions & inputs stay 100% readable in both Light & Dark modes */
+            .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+            .stApp p, .stApp span, .stApp label, .stApp li, .stMarkdown,
+            [data-testid="stWidgetLabel"] p, [data-testid="stCaptionContainer"] p {{
+                color: {text_primary} !important;
+            }}
+            [data-testid="stSidebar"] {{
+                background-color: {bg_sidebar};
+                border-right: 1px solid {border_color};
+            }}
+            [data-testid="stSidebar"] * {{
+                color: {text_primary} !important;
+            }}
+
+            /* Inputs & Selectboxes in Dark/Light */
+            input, textarea, [data-baseweb="select"] > div {{
+                background-color: {bg_card} !important;
+                color: {text_primary} !important;
+                border-color: {border_color} !important;
+            }}
+
+            /* Executive Banner */
+            .exec-header {{
+                background: linear-gradient(135deg, {primary} 0%, {hover} 100%);
+                padding: 1.55rem 2rem;
+                border-radius: 14px;
+                margin-bottom: 1.2rem;
+                box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+            }}
+            .exec-header h1 {{
+                color: #FFFFFF !important;
+                font-size: 1.8rem;
+                font-weight: 800;
+                margin: 0;
+            }}
+            .exec-header p {{
+                color: #F1F5F9 !important;
+                font-size: 0.95rem;
+                margin: 0.35rem 0 0 0;
+                font-weight: 500;
+            }}
+
+            /* Interactive KPI Cards */
+            .kpi-card {{
+                background: {bg_card};
+                border: 1px solid {border_color};
+                border-top: 4px solid {primary};
+                border-radius: 12px;
+                padding: 1.15rem 1.25rem;
+                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+                transition: all 0.25s ease;
+                cursor: pointer;
+                min-height: 126px;
+            }}
+            .kpi-card:hover {{
+                transform: translateY(-4px);
+                border-color: {primary};
+                background-color: {soft_bg};
+                box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+            }}
+            .kpi-label {{
+                font-size: 0.78rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: {text_secondary} !important;
+                margin-bottom: 0.35rem;
+            }}
+            .kpi-value {{
+                font-size: 1.55rem;
+                font-weight: 800;
+                color: {text_primary} !important;
+                line-height: 1.2;
+            }}
+            .kpi-hint {{
+                font-size: 0.76rem;
+                color: {primary} !important;
+                margin-top: 0.4rem;
+                font-weight: 600;
+            }}
+            .kpi-detail-box {{
+                max-height: 0;
+                opacity: 0;
+                overflow: hidden;
+                transition: all 0.28s ease;
+                font-size: 0.82rem;
+                color: {text_primary} !important;
+                background: {soft_bg};
+                border: 1px solid {primary};
+                border-radius: 6px;
+                padding: 0 0.6rem;
+                font-weight: 500;
+            }}
+            .kpi-card:hover .kpi-detail-box {{
+                max-height: 95px;
+                opacity: 1;
+                padding: 0.45rem 0.65rem;
+                margin-top: 0.5rem;
+            }}
+            .kpi-card:hover .kpi-hint {{
+                display: none;
+            }}
+
+            /* Chart Explanation Pill */
+            .chart-note {{
+                background-color: {soft_bg};
+                border-left: 4px solid {primary};
+                padding: 0.65rem 0.95rem;
+                border-radius: 6px;
+                font-size: 0.86rem;
+                color: {chart_note_text} !important;
+                margin-top: -0.35rem;
+                margin-bottom: 1.2rem;
+                font-weight: 500;
+            }}
+
+            /* Tutorial & Info Cards */
+            .tutorial-box {{
+                background-color: {bg_card};
+                border: 1px solid {border_color};
+                border-left: 5px solid {primary};
+                border-radius: 12px;
+                padding: 1.15rem 1.4rem;
+                margin-bottom: 1.2rem;
+            }}
+
+            /* Buttons */
+            .stButton > button, .stDownloadButton > button {{
+                background-color: {primary} !important;
+                color: #FFFFFF !important;
+                border: none !important;
+                border-radius: 8px !important;
+                font-weight: 600 !important;
+                padding: 0.5rem 1.1rem !important;
+            }}
+            .stButton > button p, .stDownloadButton > button p {{
+                color: #FFFFFF !important;
+            }}
+            .stButton > button:hover, .stDownloadButton > button:hover {{
+                background-color: {hover} !important;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+apply_dynamic_theme()
+
+
+# --- TOP THEME & CUSTOMIZATION BAR ---
+def render_theme_bar():
+    t_col1, t_col2, t_col3, t_col4 = st.columns([2.2, 1, 1.2, 1.2])
+    with t_col1:
+        st.caption(f"Active Theme: **{st.session_state.theme_mode} Mode** | Accent: **{st.session_state.accent_name}**")
+    with t_col2:
+        toggle_label = "Switch to Dark Mode" if st.session_state.theme_mode == "Light" else "Switch to Light Mode"
+        toggle_icon = ":material/dark_mode:" if st.session_state.theme_mode == "Light" else ":material/light_mode:"
+        if st.button(toggle_label, icon=toggle_icon, use_container_width=True):
+            st.session_state.theme_mode = "Dark" if st.session_state.theme_mode == "Light" else "Light"
+            st.rerun()
+    with t_col3:
+        chosen_accent = st.selectbox(
+            "Customize Theme Color",
+            options=list(ACCENT_PRESETS.keys()),
+            index=list(ACCENT_PRESETS.keys()).index(st.session_state.accent_name),
+            label_visibility="collapsed",
+        )
+        if chosen_accent != st.session_state.accent_name:
+            st.session_state.accent_name = chosen_accent
+            st.rerun()
+    with t_col4:
+        if st.session_state.authenticated:
+            if st.button("Show Guide", icon=":material/help:", use_container_width=True):
+                st.session_state.show_tutorial = True
+                st.rerun()
+
+
+render_theme_bar()
 
 
 # --- 1. PERSISTENT LOGIN & DIRECT SIGN-UP PORTAL ---
@@ -244,9 +325,9 @@ def render_login_portal():
     with col2:
         st.markdown(
             """
-            <div class="exec-header" style="text-align:center; margin-top:1.5rem;">
+            <div class="exec-header" style="text-align:center; margin-top:1rem;">
                 <h1>Competitor Intelligence Portal</h1>
-                <p>Persistent Account Access & Automated Market Analytics</p>
+                <p>Persistent Account Access & Adaptive Market Analytics</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -292,7 +373,7 @@ if not st.session_state.authenticated:
     st.stop()
 
 
-# --- SMART DATA & ANALYTICS ENGINE ---
+# --- SMART DATA & DATASET-TYPE DETECTOR ---
 def load_sample_data():
     return pd.DataFrame(
         {
@@ -319,6 +400,50 @@ def find_column(df: pd.DataFrame, keywords: list, numeric_only: bool = False):
             if kw in col.lower():
                 return col
     return cols[0] if cols else None
+
+
+def detect_dataset_profile(df: pd.DataFrame) -> dict:
+    """Identifies the exact structure and domain of any uploaded dataset."""
+    cols_lower = [c.lower() for c in df.columns]
+    date_cols = [c for c in df.columns if "date" in c.lower() or "time" in c.lower() or "month" in c.lower() or "year" in c.lower()]
+    has_competitor = any(k in c for c in cols_lower for k in ["competitor", "brand", "rival", "company"])
+    has_sales = any(k in c for c in cols_lower for k in ["salesamount", "revenue", "sales", "profit", "order"])
+
+    if has_competitor:
+        profile_type = "Competitor Benchmarking Dataset"
+    elif date_cols and has_sales:
+        profile_type = "Time-Series Sales & Revenue Dataset"
+    elif has_sales:
+        profile_type = "Commercial Product & Revenue Dataset"
+    else:
+        profile_type = "Multi-Attribute Market Dataset"
+
+    return {
+        "type": profile_type,
+        "date_col": date_cols[0] if date_cols else None,
+        "has_competitor": has_competitor,
+        "has_sales": has_sales,
+    }
+
+
+def style_plotly_chart(fig):
+    """Ensures every chart is 100% readable in both Dark Mode and Light Mode."""
+    is_dark = st.session_state.theme_mode == "Dark"
+    bg_color = "#111827" if is_dark else "#FFFFFF"
+    font_color = "#F8FAFC" if is_dark else "#0F172A"
+    grid_color = "#1E293B" if is_dark else "#E2E8F0"
+
+    fig.update_layout(
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font=dict(color=font_color, size=12),
+        title_font=dict(color=font_color, size=15),
+        xaxis=dict(gridcolor=grid_color, tickfont=dict(color=font_color), title_font=dict(color=font_color)),
+        yaxis=dict(gridcolor=grid_color, tickfont=dict(color=font_color), title_font=dict(color=font_color)),
+        legend=dict(font=dict(color=font_color)),
+        margin=dict(t=55, b=25),
+    )
+    return fig
 
 
 def build_adaptive_kpis(df: pd.DataFrame, file_label: str) -> list:
@@ -538,7 +663,7 @@ def generate_comprehensive_swot(df: pd.DataFrame) -> dict:
     }
 
 
-# --- UPGRADED MULTI-FEATURE WEB INTELLIGENCE SCRAPER ---
+# --- LIVE WEB INTELLIGENCE SCRAPER ---
 def analyze_competitor_url(url: str) -> dict:
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -566,7 +691,11 @@ def analyze_competitor_url(url: str) -> dict:
     images = soup.find_all("img")
 
     page_text = soup.get_text(" ", strip=True).lower()
-    promo_keywords = [kw for kw in ["sale", "discount", "% off", "free shipping", "new arrival", "flat", "winter", "summer", "warranty"] if kw in page_text]
+    promo_keywords = [
+        kw
+        for kw in ["sale", "discount", "% off", "free shipping", "new arrival", "flat", "winter", "summer", "warranty"]
+        if kw in page_text
+    ]
     prices_found = re.findall(r"(?:PKR|Rs\.?|USD|\$)\s?[\d,]+(?:\.\d{2})?", soup.get_text(" ", strip=True))[:6]
 
     return {
@@ -583,24 +712,18 @@ def analyze_competitor_url(url: str) -> dict:
     }
 
 
-# --- SIDEBAR (WHITE & CLEAN) ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.markdown(f"### :material/account_circle: {st.session_state.display_name}")
     st.caption(f"Logged in as `@{st.session_state.current_user}`")
-    col_s1, col_s2 = st.columns(2)
-    with col_s1:
-        if st.button("Tutorial", icon=":material/help:", use_container_width=True):
-            st.session_state.show_tutorial = True
-            st.rerun()
-    with col_s2:
-        if st.button("Logout", icon=":material/logout:", use_container_width=True):
-            st.session_state.authenticated = False
-            st.session_state.current_user = ""
-            st.session_state.display_name = ""
-            st.rerun()
+    if st.button("Logout", icon=":material/logout:", use_container_width=True):
+        st.session_state.authenticated = False
+        st.session_state.current_user = ""
+        st.session_state.display_name = ""
+        st.rerun()
 
     st.divider()
-    st.markdown("### :material/folder_open: Upload Datasets")
+    st.markdown("### :material/folder_open: Upload Market Data")
     uploaded_files = st.file_uploader(
         "Upload 1 or More CSV / Excel Files",
         type=["csv", "xlsx"],
@@ -642,12 +765,14 @@ with st.sidebar:
     )
 
 
-# --- MAIN BLUE & WHITE EXECUTIVE DASHBOARD ---
+# --- MAIN EXECUTIVE DASHBOARD ---
+profile = detect_dataset_profile(df)
+
 st.markdown(
-    """
+    f"""
     <div class="exec-header">
         <h1>AI-Powered Competitor Intelligence & Market Analysis</h1>
-        <p>Clear Visual Benchmarking, Distinct Metric Graphs & Strategic SWOT Insights</p>
+        <p>Detected Profile: <strong>{profile['type']}</strong> — Adaptive Graphs, Head-to-Head Competitor Comparison & SWOT</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -658,12 +783,12 @@ if st.session_state.show_tutorial:
     st.markdown(
         """
         <div class="tutorial-box">
-            <h4>Quick Guide — Easy 4-Step Overview</h4>
-            <ul style="margin:0; padding-left:1.2rem; color:#1E293B; font-size:0.92rem; line-height:1.6;">
-                <li><strong>1. Upload Files (Left Sidebar):</strong> Upload single or multiple CSV/Excel files to merge and analyze automatically.</li>
-                <li><strong>2. Hover on KPI Cards:</strong> Move your cursor over any blue-accented KPI card below to inspect exact min, max, and total details.</li>
-                <li><strong>3. Four Distinct Graphs:</strong> Each graph below reveals a different insight — <em>(1) Price/Value, (2) Rating/Quality, (3) Market Share %, and (4) Sales vs. Price Positioning</em>.</li>
-                <li><strong>4. SWOT & Live Web Intelligence:</strong> Generate a complete SWOT report or compare multiple live competitor websites side-by-side.</li>
+            <h4>Quick Guide — Adaptive Competitor Analysis</h4>
+            <ul style="margin:0; padding-left:1.2rem; font-size:0.92rem; line-height:1.6;">
+                <li><strong>1. Light / Dark Mode & Custom Colors (Top Bar):</strong> Switch between crisp Light Mode, high-contrast Dark Mode, and 5 accent themes anytime.</li>
+                <li><strong>2. File-Adaptive Graphs:</strong> The dashboard automatically detects your file type (Competitor Benchmark, Time-Series Sales, or Product Data) and builds tailored charts.</li>
+                <li><strong>3. Head-to-Head Competitor Duel:</strong> Select any two competitors/segments in the Analytics tab to compare them side-by-side and see who wins on each metric.</li>
+                <li><strong>4. Comprehensive SWOT & Live Web Intelligence:</strong> Generate a complete data-backed SWOT report or audit live competitor websites.</li>
             </ul>
         </div>
         """,
@@ -695,13 +820,13 @@ st.divider()
 # --- NAVIGATION TABS ---
 tab_overview, tab_swot, tab_scraper = st.tabs(
     [
-        ":material/monitoring: Distinct Visual Graphs & Scorecard",
+        ":material/monitoring: Adaptive Graphs & Competitor Duel",
         ":material/psychology: Comprehensive SWOT Analysis",
         ":material/language: Live Web Intelligence",
     ]
 )
 
-# --- TAB 1: 4 DISTINCT, CRYSTAL-CLEAR GRAPHS (EACH TELLS ITS OWN STORY) ---
+# --- TAB 1: FILE-ADAPTIVE GRAPHS + HEAD-TO-HEAD COMPETITOR ANALYZER ---
 with tab_overview:
     cat_options = df.select_dtypes(exclude="number").columns.tolist()
     default_cat = find_column(
@@ -709,13 +834,11 @@ with tab_overview:
     )
     num_cols = df.select_dtypes(include="number").columns.tolist()
 
-    # Automatically assign distinct roles to available numeric columns so every chart shows something DIFFERENT
     price_col = find_column(df, ["price", "cost", "unitprice", "amount", "salesamount", "revenue"], numeric_only=True)
     rating_col = find_column(df, ["rating", "score", "review", "satisfaction"], numeric_only=True)
     share_col = find_column(df, ["market_share", "share", "salesamount", "revenue", "sales", "price"], numeric_only=True)
     volume_col = find_column(df, ["monthly_sales", "sales", "quantity", "volume", "units", "revenue"], numeric_only=True)
 
-    # Fallbacks if dataset has generic numeric columns
     if len(num_cols) >= 2 and rating_col == price_col:
         rating_col = [c for c in num_cols if c != price_col][0]
     if len(num_cols) >= 3 and volume_col in [price_col, rating_col]:
@@ -724,12 +847,12 @@ with tab_overview:
 
     c_head, c_cat = st.columns([2.2, 1])
     with c_head:
-        st.subheader(":material/analytics: Competitor & Market Visual Intelligence")
-        st.caption("Each chart below highlights a unique dimension so you can read pricing, quality, market share, and sales volume at a glance.")
+        st.subheader(f":material/analytics: Tailored Analytics ({profile['type']})")
+        st.caption("Graphs automatically adapt to your file's columns and structure.")
     with c_cat:
         selected_cat = (
             st.selectbox(
-                "Compare By Category / Competitor:",
+                "Analyze Competitor / Segment By:",
                 options=cat_options,
                 index=cat_options.index(default_cat) if default_cat in cat_options else 0,
             )
@@ -737,21 +860,42 @@ with tab_overview:
             else None
         )
 
-    blue_palette = ["#1D4ED8", "#0284C7", "#3B82F6", "#0EA5E9", "#6366F1", "#1E40AF", "#38BDF8"]
+    accent_hex = ACCENT_PRESETS[st.session_state.accent_name]["primary"]
+    chart_palette = [accent_hex, "#0284C7", "#10B981", "#F59E0B", "#E11D48", "#8B5CF6", "#06B6D4"]
 
     if selected_cat and num_cols:
-        # Build clean aggregated summary across all distinct metrics
         agg_spec = {}
         for col in set([c for c in [price_col, rating_col, share_col, volume_col] if c]):
             agg_spec[col] = "mean" if col in [price_col, rating_col] else "sum"
 
         summary_df = df.groupby(selected_cat, as_index=False).agg(agg_spec).head(12)
 
-        # ROW 1: Graph 1 (Pricing Comparison) + Graph 2 (Customer Rating / Quality Ranking)
+        # ROW 1: Adapts if Time-Series Date exists vs Competitor Pricing
         g1, g2 = st.columns(2)
 
         with g1:
-            if price_col:
+            if profile["date_col"] and price_col:
+                # Time-Series Trend Graph for Sales/Date datasets
+                ts_df = df[[profile["date_col"], price_col]].dropna().copy()
+                ts_df[profile["date_col"]] = pd.to_datetime(ts_df[profile["date_col"]], errors="coerce")
+                ts_df = ts_df.dropna().sort_values(profile["date_col"])
+                if not ts_df.empty:
+                    ts_grouped = ts_df.groupby(ts_df[profile["date_col"]].dt.to_period("M"))[price_col].sum().reset_index()
+                    ts_grouped[profile["date_col"]] = ts_grouped[profile["date_col"]].astype(str)
+                    fig_trend = px.line(
+                        ts_grouped,
+                        x=profile["date_col"],
+                        y=price_col,
+                        markers=True,
+                        title=f"1. Time-Series Trend: {price_col} Over Time",
+                        color_discrete_sequence=[accent_hex],
+                    )
+                    st.plotly_chart(style_plotly_chart(fig_trend), use_container_width=True)
+                    st.markdown(
+                        f"<div class='chart-note'><b>Trend Insight:</b> Tracks monthly progression of <b>{price_col}</b> across your uploaded timeline.</div>",
+                        unsafe_allow_html=True,
+                    )
+            elif price_col:
                 p_df = summary_df.sort_values(price_col, ascending=False)
                 avg_p = p_df[price_col].mean()
                 fig_price = px.bar(
@@ -760,30 +904,23 @@ with tab_overview:
                     y=price_col,
                     text=price_col,
                     color=selected_cat,
-                    title=f"1. Pricing Comparison: Average {price_col}",
-                    color_discrete_sequence=blue_palette,
+                    title=f"1. Competitor Pricing Comparison: Average {price_col}",
+                    color_discrete_sequence=chart_palette,
                 )
                 fig_price.update_traces(texttemplate="%{text:,.1f}", textposition="outside")
                 fig_price.add_hline(
                     y=avg_p,
                     line_dash="dash",
-                    line_color="#DC2626",
+                    line_color="#EF4444",
                     annotation_text=f"Market Avg: {avg_p:,.1f}",
                     annotation_position="top right",
                 )
-                fig_price.update_layout(
-                    showlegend=False,
-                    plot_bgcolor="#FFFFFF",
-                    paper_bgcolor="#FFFFFF",
-                    font=dict(color="#0F172A"),
-                    yaxis=dict(gridcolor="#E2E8F0"),
-                    margin=dict(t=55, b=20),
-                )
-                st.plotly_chart(fig_price, use_container_width=True)
+                fig_price.update_layout(showlegend=False)
+                st.plotly_chart(style_plotly_chart(fig_price), use_container_width=True)
                 highest_p = p_df.iloc[0]
                 lowest_p = p_df.iloc[-1]
                 st.markdown(
-                    f"<div class='chart-note'><b>Pricing Insight:</b> <b>{highest_p[selected_cat]}</b> is highest ({highest_p[price_col]:,.1f}), while <b>{lowest_p[selected_cat]}</b> offers the lowest entry ({lowest_p[price_col]:,.1f}) against market average {avg_p:,.1f}.</div>",
+                    f"<div class='chart-note'><b>Pricing Insight:</b> <b>{highest_p[selected_cat]}</b> has the highest average ({highest_p[price_col]:,.1f}), while <b>{lowest_p[selected_cat]}</b> is lowest ({lowest_p[price_col]:,.1f}) vs. market average {avg_p:,.1f}.</div>",
                     unsafe_allow_html=True,
                 )
 
@@ -797,53 +934,47 @@ with tab_overview:
                     y=selected_cat,
                     orientation="h",
                     text=rating_col,
-                    color=rating_col,
-                    color_continuous_scale="Blues",
-                    title=f"2. Quality & Satisfaction Ranking: {rating_col}",
+                    color=selected_cat,
+                    title=f"2. Performance & Quality Ranking: {rating_col}",
+                    color_discrete_sequence=chart_palette,
                 )
                 fig_rating.update_traces(texttemplate="%{text:,.2f}", textposition="outside")
                 fig_rating.add_vline(
                     x=avg_r,
                     line_dash="dash",
-                    line_color="#DC2626",
+                    line_color="#EF4444",
                     annotation_text=f"Avg: {avg_r:,.2f}",
                     annotation_position="top right",
                 )
-                fig_rating.update_layout(
-                    plot_bgcolor="#FFFFFF",
-                    paper_bgcolor="#FFFFFF",
-                    font=dict(color="#0F172A"),
-                    xaxis=dict(gridcolor="#E2E8F0"),
-                    margin=dict(t=55, b=20),
-                )
-                st.plotly_chart(fig_rating, use_container_width=True)
+                fig_rating.update_layout(showlegend=False)
+                st.plotly_chart(style_plotly_chart(fig_rating), use_container_width=True)
                 top_r = r_df.iloc[-1]
                 st.markdown(
-                    f"<div class='chart-note'><b>Quality Insight:</b> <b>{top_r[selected_cat]}</b> leads in {rating_col} with <b>{top_r[rating_col]:,.2f}</b> (Market Average: {avg_r:,.2f}).</div>",
+                    f"<div class='chart-note'><b>Quality Insight:</b> <b>{top_r[selected_cat]}</b> leads in {rating_col} with <b>{top_r[rating_col]:,.2f}</b> (Average: {avg_r:,.2f}).</div>",
                     unsafe_allow_html=True,
                 )
             else:
-                # Fallback if dataset only has 1 numeric column: show Record Count per category
                 cnt_df = df[selected_cat].value_counts().reset_index().head(10)
-                cnt_df.columns = [selected_cat, "Transaction_Count"]
+                cnt_df.columns = [selected_cat, "Record_Count"]
                 fig_cnt = px.bar(
                     cnt_df,
-                    x="Transaction_Count",
+                    x="Record_Count",
                     y=selected_cat,
                     orientation="h",
-                    text="Transaction_Count",
+                    text="Record_Count",
+                    color=selected_cat,
                     title=f"2. Activity Volume: Records per {selected_cat}",
-                    color_discrete_sequence=["#0284C7"],
+                    color_discrete_sequence=chart_palette,
                 )
                 fig_cnt.update_traces(texttemplate="%{text:,}", textposition="outside")
-                fig_cnt.update_layout(plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF", font=dict(color="#0F172A"))
-                st.plotly_chart(fig_cnt, use_container_width=True)
+                fig_cnt.update_layout(showlegend=False)
+                st.plotly_chart(style_plotly_chart(fig_cnt), use_container_width=True)
                 st.markdown(
-                    f"<div class='chart-note'><b>Volume Insight:</b> Shows total number of records/orders recorded under each {selected_cat}.</div>",
+                    f"<div class='chart-note'><b>Volume Insight:</b> Total records/transactions logged per {selected_cat}.</div>",
                     unsafe_allow_html=True,
                 )
 
-        # ROW 2: Graph 3 (Market Share % ONLY Here) + Graph 4 (Sales Volume vs. Price Positioning)
+        # ROW 2: Market Share Donut + Strategic Positioning Scatter
         g3, g4 = st.columns(2)
 
         with g3:
@@ -854,25 +985,20 @@ with tab_overview:
                     names=selected_cat,
                     values=share_col,
                     hole=0.45,
-                    title=f"3. Market Share Breakdown (% of Total {share_col})",
-                    color_discrete_sequence=blue_palette,
+                    title=f"3. Market Share Breakdown (% of {share_col})",
+                    color_discrete_sequence=chart_palette,
                 )
                 fig_share.update_traces(
                     textposition="inside",
                     textinfo="percent+label",
-                    hovertemplate="<b>%{label}</b><br>Value: %{value:,.0f}<br>Market Share: %{percent}<extra></extra>",
+                    hovertemplate="<b>%{label}</b><br>Value: %{value:,.0f}<br>Share: %{percent}<extra></extra>",
                 )
-                fig_share.update_layout(
-                    paper_bgcolor="#FFFFFF",
-                    font=dict(color="#0F172A"),
-                    margin=dict(t=55, b=20),
-                )
-                st.plotly_chart(fig_share, use_container_width=True)
+                st.plotly_chart(style_plotly_chart(fig_share), use_container_width=True)
                 top_s = s_df.iloc[0]
                 tot_s = s_df[share_col].sum()
                 pct_s = (top_s[share_col] / tot_s * 100) if tot_s else 0
                 st.markdown(
-                    f"<div class='chart-note'><b>Market Share Insight:</b> <b>{top_s[selected_cat]}</b> holds the largest slice at <b>{pct_s:.1f}%</b> of total {share_col}.</div>",
+                    f"<div class='chart-note'><b>Market Share Insight:</b> <b>{top_s[selected_cat]}</b> controls <b>{pct_s:.1f}%</b> of total {share_col}.</div>",
                     unsafe_allow_html=True,
                 )
 
@@ -885,24 +1011,16 @@ with tab_overview:
                     size=share_col if share_col and (summary_df[share_col] > 0).all() else None,
                     color=selected_cat,
                     text=selected_cat,
-                    title=f"4. Price vs. {volume_col} Strategic Positioning",
-                    color_discrete_sequence=blue_palette,
+                    title=f"4. Strategic Positioning: {price_col} vs. {volume_col}",
+                    color_discrete_sequence=chart_palette,
                 )
                 fig_pos.update_traces(textposition="top center")
                 fig_pos.add_vline(x=summary_df[price_col].mean(), line_dash="dot", line_color="#94A3B8")
                 fig_pos.add_hline(y=summary_df[volume_col].mean(), line_dash="dot", line_color="#94A3B8")
-                fig_pos.update_layout(
-                    showlegend=False,
-                    plot_bgcolor="#FFFFFF",
-                    paper_bgcolor="#FFFFFF",
-                    font=dict(color="#0F172A"),
-                    xaxis=dict(gridcolor="#E2E8F0"),
-                    yaxis=dict(gridcolor="#E2E8F0"),
-                    margin=dict(t=55, b=20),
-                )
-                st.plotly_chart(fig_pos, use_container_width=True)
+                fig_pos.update_layout(showlegend=False)
+                st.plotly_chart(style_plotly_chart(fig_pos), use_container_width=True)
                 st.markdown(
-                    f"<div class='chart-note'><b>Positioning Insight:</b> Top-left players achieve high <b>{volume_col}</b> at lower <b>{price_col}</b> (best value); top-right players command premium pricing with strong volume.</div>",
+                    f"<div class='chart-note'><b>Positioning Insight:</b> Compares <b>{price_col}</b> against <b>{volume_col}</b> to separate high-value leaders from overpriced players.</div>",
                     unsafe_allow_html=True,
                 )
             else:
@@ -911,14 +1029,50 @@ with tab_overview:
                     x=price_col or num_cols[0],
                     nbins=20,
                     title=f"4. Value Distribution of {price_col or num_cols[0]}",
-                    color_discrete_sequence=["#2563EB"],
+                    color_discrete_sequence=[accent_hex],
                 )
-                fig_dist.update_layout(plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF", font=dict(color="#0F172A"))
-                st.plotly_chart(fig_dist, use_container_width=True)
+                st.plotly_chart(style_plotly_chart(fig_dist), use_container_width=True)
                 st.markdown(
-                    "<div class='chart-note'><b>Distribution Insight:</b> Shows where most transactions or prices are concentrated across your dataset.</div>",
+                    "<div class='chart-note'><b>Distribution Insight:</b> Displays value spread across all records in your dataset.</div>",
                     unsafe_allow_html=True,
                 )
+
+        # --- HEAD-TO-HEAD COMPETITOR COMPARISON DUEL ---
+        st.divider()
+        st.subheader(":material/swords: Head-to-Head Competitor Comparison")
+        st.caption("Select any two competitors or segments from your dataset to compare them directly across every metric.")
+
+        entities = summary_df[selected_cat].astype(str).tolist()
+        if len(entities) >= 2:
+            h1, h2 = st.columns(2)
+            with h1:
+                comp_a = st.selectbox("Select Competitor A:", options=entities, index=0)
+            with h2:
+                comp_b = st.selectbox("Select Competitor B:", options=entities, index=1)
+
+            row_a = summary_df[summary_df[selected_cat].astype(str) == comp_a].iloc[0]
+            row_b = summary_df[summary_df[selected_cat].astype(str) == comp_b].iloc[0]
+
+            duel_rows = []
+            for m_col in [c for c in summary_df.columns if c != selected_cat]:
+                val_a = float(row_a[m_col])
+                val_b = float(row_b[m_col])
+                diff = val_a - val_b
+                # For price/cost, lower is more competitive; for rating/sales/share, higher is better
+                if any(k in m_col.lower() for k in ["price", "cost"]):
+                    winner = comp_a if val_a < val_b else (comp_b if val_b < val_a else "Tie")
+                else:
+                    winner = comp_a if val_a > val_b else (comp_b if val_b > val_a else "Tie")
+                duel_rows.append(
+                    {
+                        "Metric": m_col,
+                        comp_a: round(val_a, 2),
+                        comp_b: round(val_b, 2),
+                        "Difference (A - B)": round(diff, 2),
+                        "Advantage": winner,
+                    }
+                )
+            st.dataframe(pd.DataFrame(duel_rows), use_container_width=True, hide_index=True)
 
         # ROW 3: Complete Scorecard Table
         st.subheader(":material/leaderboard: Unified Competitor & Segment Scorecard")
@@ -966,7 +1120,7 @@ with tab_swot:
         for act in swot["actions"]:
             st.markdown(act)
 
-# --- TAB 3: UPGRADED MULTI-COMPETITOR LIVE WEB INTELLIGENCE ---
+# --- TAB 3: LIVE WEB INTELLIGENCE ---
 with tab_scraper:
     st.subheader(":material/language: Live Competitor Website & Positioning Intelligence")
     st.caption("Analyze and compare multiple competitor URLs side-by-side (Headings, Value Proposition, Promo Signals, Price Mentions & Load Speed).")
