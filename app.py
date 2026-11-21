@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 # --- PAGE CONFIGURATION ---
@@ -89,23 +90,12 @@ if "show_tutorial" not in st.session_state:
     st.session_state.show_tutorial = True
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Light"
-if "accent_name" not in st.session_state:
-    st.session_state.accent_name = "Royal Indigo"
-
-ACCENT_PRESETS = {
-    "Royal Indigo": {"primary": "#4F46E5", "hover": "#4338CA", "soft_light": "#EEF2FF", "soft_dark": "#1E1B4B"},
-    "Emerald Teal": {"primary": "#0D9488", "hover": "#0F766E", "soft_light": "#F0FDFA", "soft_dark": "#134E4A"},
-    "Crimson Rose": {"primary": "#E11D48", "hover": "#BE123C", "soft_light": "#FFF1F2", "soft_dark": "#4C0519"},
-    "Amber Gold": {"primary": "#D97706", "hover": "#B45309", "soft_light": "#FFFBEB", "soft_dark": "#451A03"},
-    "Ocean Cyan": {"primary": "#0284C7", "hover": "#0369A1", "soft_light": "#F0F9FF", "soft_dark": "#082F49"},
-}
 
 
-def apply_dynamic_theme():
-    is_dark = st.session_state.theme_mode == "Dark"
-    accent = ACCENT_PRESETS.get(st.session_state.accent_name, ACCENT_PRESETS["Royal Indigo"])
-    primary = accent["primary"]
-    hover = accent["hover"]
+# --- DYNAMIC LIGHT / DARK THEME WITH IPHONE-STYLE PILL TOGGLE ---
+def apply_theme_styles():
+    # Login page always stays clean Light theme
+    is_dark = st.session_state.authenticated and (st.session_state.theme_mode == "Dark")
 
     if is_dark:
         bg_main = "#0B1120"
@@ -114,8 +104,13 @@ def apply_dynamic_theme():
         text_primary = "#F8FAFC"
         text_secondary = "#CBD5E1"
         border_color = "#334155"
-        soft_bg = accent["soft_dark"]
-        chart_note_text = "#F1F5F9"
+        soft_bg = "#1E293B"
+        accent = "#3B82F6"
+        accent_hover = "#2563EB"
+        pill_track = "#1E293B"
+        pill_knob_pos = "translateX(34px)"
+        pill_icon = "🌙"
+        popup_text = "Switch to Light Mode"
     else:
         bg_main = "#F8FAFC"
         bg_card = "#FFFFFF"
@@ -123,8 +118,13 @@ def apply_dynamic_theme():
         text_primary = "#0F172A"
         text_secondary = "#475569"
         border_color = "#CBD5E1"
-        soft_bg = accent["soft_light"]
-        chart_note_text = "#0F172A"
+        soft_bg = "#EFF6FF"
+        accent = "#2563EB"
+        accent_hover = "#1D4ED8"
+        pill_track = "#E2E8F0"
+        pill_knob_pos = "translateX(0px)"
+        pill_icon = "☀️"
+        popup_text = "Switch to Dark Mode"
 
     st.markdown(
         f"""
@@ -138,7 +138,6 @@ def apply_dynamic_theme():
                 background-color: {bg_main};
                 color: {text_primary};
             }}
-            /* Ensure ALL headings, labels, markdown, captions & inputs stay 100% readable in both Light & Dark modes */
             .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
             .stApp p, .stApp span, .stApp label, .stApp li, .stMarkdown,
             [data-testid="stWidgetLabel"] p, [data-testid="stCaptionContainer"] p {{
@@ -151,30 +150,87 @@ def apply_dynamic_theme():
             [data-testid="stSidebar"] * {{
                 color: {text_primary} !important;
             }}
-
-            /* Inputs & Selectboxes in Dark/Light */
             input, textarea, [data-baseweb="select"] > div {{
                 background-color: {bg_card} !important;
                 color: {text_primary} !important;
                 border-color: {border_color} !important;
             }}
 
+            /* iPhone-Style Sliding Pill Toggle with Hover Popup */
+            .ios-toggle-wrapper {{
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                justify-content: flex-end;
+                width: 100%;
+                padding-top: 4px;
+            }}
+            .ios-pill {{
+                position: relative;
+                width: 72px;
+                height: 36px;
+                background: {pill_track};
+                border: 1.5px solid {border_color};
+                border-radius: 999px;
+                padding: 3px;
+                display: flex;
+                align-items: center;
+                transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+                box-shadow: inset 0 2px 5px rgba(0,0,0,0.12);
+                pointer-events: none;
+            }}
+            .ios-knob {{
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: #FFFFFF;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 15px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+                transform: {pill_knob_pos};
+                transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }}
+            .ios-popup {{
+                position: absolute;
+                top: 44px;
+                right: 0;
+                background: #0F172A;
+                color: #FFFFFF !important;
+                font-size: 0.76rem;
+                font-weight: 600;
+                padding: 5px 11px;
+                border-radius: 8px;
+                white-space: nowrap;
+                opacity: 0;
+                transform: translateY(-6px);
+                transition: all 0.22s ease;
+                pointer-events: none;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+                z-index: 999;
+            }}
+            .ios-toggle-col:hover .ios-popup {{
+                opacity: 1;
+                transform: translateY(0px);
+            }}
+
             /* Executive Banner */
             .exec-header {{
-                background: linear-gradient(135deg, {primary} 0%, {hover} 100%);
+                background: linear-gradient(135deg, #1E3A8A 0%, {accent} 100%);
                 padding: 1.55rem 2rem;
-                border-radius: 14px;
-                margin-bottom: 1.2rem;
-                box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+                border-radius: 16px;
+                margin-bottom: 1.3rem;
+                box-shadow: 0 10px 25px rgba(37, 99, 235, 0.16);
             }}
             .exec-header h1 {{
                 color: #FFFFFF !important;
-                font-size: 1.8rem;
+                font-size: 1.82rem;
                 font-weight: 800;
                 margin: 0;
             }}
             .exec-header p {{
-                color: #F1F5F9 !important;
+                color: #E0E7FF !important;
                 font-size: 0.95rem;
                 margin: 0.35rem 0 0 0;
                 font-weight: 500;
@@ -184,19 +240,19 @@ def apply_dynamic_theme():
             .kpi-card {{
                 background: {bg_card};
                 border: 1px solid {border_color};
-                border-top: 4px solid {primary};
-                border-radius: 12px;
+                border-top: 4px solid {accent};
+                border-radius: 14px;
                 padding: 1.15rem 1.25rem;
-                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
                 transition: all 0.25s ease;
                 cursor: pointer;
                 min-height: 126px;
             }}
             .kpi-card:hover {{
                 transform: translateY(-4px);
-                border-color: {primary};
+                border-color: {accent};
                 background-color: {soft_bg};
-                box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
             }}
             .kpi-label {{
                 font-size: 0.78rem;
@@ -214,7 +270,7 @@ def apply_dynamic_theme():
             }}
             .kpi-hint {{
                 font-size: 0.76rem;
-                color: {primary} !important;
+                color: {accent} !important;
                 margin-top: 0.4rem;
                 font-weight: 600;
             }}
@@ -226,8 +282,8 @@ def apply_dynamic_theme():
                 font-size: 0.82rem;
                 color: {text_primary} !important;
                 background: {soft_bg};
-                border: 1px solid {primary};
-                border-radius: 6px;
+                border: 1px solid {accent};
+                border-radius: 8px;
                 padding: 0 0.6rem;
                 font-weight: 500;
             }}
@@ -241,93 +297,63 @@ def apply_dynamic_theme():
                 display: none;
             }}
 
-            /* Chart Explanation Pill */
+            /* Chart Explanation Card */
             .chart-note {{
                 background-color: {soft_bg};
-                border-left: 4px solid {primary};
-                padding: 0.65rem 0.95rem;
-                border-radius: 6px;
-                font-size: 0.86rem;
-                color: {chart_note_text} !important;
+                border-left: 4px solid {accent};
+                padding: 0.7rem 1rem;
+                border-radius: 8px;
+                font-size: 0.87rem;
+                color: {text_primary} !important;
                 margin-top: -0.35rem;
-                margin-bottom: 1.2rem;
+                margin-bottom: 1.3rem;
                 font-weight: 500;
             }}
 
-            /* Tutorial & Info Cards */
+            /* Tutorial Box */
             .tutorial-box {{
                 background-color: {bg_card};
                 border: 1px solid {border_color};
-                border-left: 5px solid {primary};
+                border-left: 5px solid {accent};
                 border-radius: 12px;
                 padding: 1.15rem 1.4rem;
                 margin-bottom: 1.2rem;
             }}
 
-            /* Buttons */
+            /* Primary Buttons */
             .stButton > button, .stDownloadButton > button {{
-                background-color: {primary} !important;
+                background-color: {accent} !important;
                 color: #FFFFFF !important;
                 border: none !important;
                 border-radius: 8px !important;
                 font-weight: 600 !important;
-                padding: 0.5rem 1.1rem !important;
+                padding: 0.5rem 1.15rem !important;
             }}
             .stButton > button p, .stDownloadButton > button p {{
                 color: #FFFFFF !important;
             }}
             .stButton > button:hover, .stDownloadButton > button:hover {{
-                background-color: {hover} !important;
+                background-color: {accent_hover} !important;
             }}
         </style>
         """,
         unsafe_allow_html=True,
     )
+    return pill_icon, popup_text
 
 
-apply_dynamic_theme()
+pill_icon, popup_text = apply_theme_styles()
 
 
-# --- TOP THEME & CUSTOMIZATION BAR ---
-def render_theme_bar():
-    t_col1, t_col2, t_col3, t_col4 = st.columns([2.2, 1, 1.2, 1.2])
-    with t_col1:
-        st.caption(f"Active Theme: **{st.session_state.theme_mode} Mode** | Accent: **{st.session_state.accent_name}**")
-    with t_col2:
-        toggle_label = "Switch to Dark Mode" if st.session_state.theme_mode == "Light" else "Switch to Light Mode"
-        toggle_icon = ":material/dark_mode:" if st.session_state.theme_mode == "Light" else ":material/light_mode:"
-        if st.button(toggle_label, icon=toggle_icon, use_container_width=True):
-            st.session_state.theme_mode = "Dark" if st.session_state.theme_mode == "Light" else "Light"
-            st.rerun()
-    with t_col3:
-        chosen_accent = st.selectbox(
-            "Customize Theme Color",
-            options=list(ACCENT_PRESETS.keys()),
-            index=list(ACCENT_PRESETS.keys()).index(st.session_state.accent_name),
-            label_visibility="collapsed",
-        )
-        if chosen_accent != st.session_state.accent_name:
-            st.session_state.accent_name = chosen_accent
-            st.rerun()
-    with t_col4:
-        if st.session_state.authenticated:
-            if st.button("Show Guide", icon=":material/help:", use_container_width=True):
-                st.session_state.show_tutorial = True
-                st.rerun()
-
-
-render_theme_bar()
-
-
-# --- 1. PERSISTENT LOGIN & DIRECT SIGN-UP PORTAL ---
+# --- 1. CLEAN LOGIN & SIGN-UP PORTAL (NO THEME BUTTON HERE) ---
 def render_login_portal():
     col1, col2, col3 = st.columns([1, 1.45, 1])
     with col2:
         st.markdown(
             """
-            <div class="exec-header" style="text-align:center; margin-top:1rem;">
+            <div class="exec-header" style="text-align:center; margin-top:2rem;">
                 <h1>Competitor Intelligence Portal</h1>
-                <p>Persistent Account Access & Adaptive Market Analytics</p>
+                <p>Enterprise Market Analytics & Strategic Benchmarking System</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -403,9 +429,8 @@ def find_column(df: pd.DataFrame, keywords: list, numeric_only: bool = False):
 
 
 def detect_dataset_profile(df: pd.DataFrame) -> dict:
-    """Identifies the exact structure and domain of any uploaded dataset."""
     cols_lower = [c.lower() for c in df.columns]
-    date_cols = [c for c in df.columns if "date" in c.lower() or "time" in c.lower() or "month" in c.lower() or "year" in c.lower()]
+    date_cols = [c for c in df.columns if any(k in c.lower() for k in ["date", "time", "month", "year"])]
     has_competitor = any(k in c for c in cols_lower for k in ["competitor", "brand", "rival", "company"])
     has_sales = any(k in c for c in cols_lower for k in ["salesamount", "revenue", "sales", "profit", "order"])
 
@@ -427,7 +452,6 @@ def detect_dataset_profile(df: pd.DataFrame) -> dict:
 
 
 def style_plotly_chart(fig):
-    """Ensures every chart is 100% readable in both Dark Mode and Light Mode."""
     is_dark = st.session_state.theme_mode == "Dark"
     bg_color = "#111827" if is_dark else "#FFFFFF"
     font_color = "#F8FAFC" if is_dark else "#0F172A"
@@ -557,7 +581,7 @@ def build_adaptive_kpis(df: pd.DataFrame, file_label: str) -> list:
     return kpis
 
 
-# --- COMPREHENSIVE, DEEP DATA-DRIVEN SWOT ENGINE ---
+# --- COMPREHENSIVE DATA-DRIVEN SWOT ENGINE ---
 def generate_comprehensive_swot(df: pd.DataFrame) -> dict:
     total_rows = len(df)
     num_cols = df.select_dtypes(include="number").columns.tolist()
@@ -716,11 +740,17 @@ def analyze_competitor_url(url: str) -> dict:
 with st.sidebar:
     st.markdown(f"### :material/account_circle: {st.session_state.display_name}")
     st.caption(f"Logged in as `@{st.session_state.current_user}`")
-    if st.button("Logout", icon=":material/logout:", use_container_width=True):
-        st.session_state.authenticated = False
-        st.session_state.current_user = ""
-        st.session_state.display_name = ""
-        st.rerun()
+    c_sb1, c_sb2 = st.columns(2)
+    with c_sb1:
+        if st.button("Guide", icon=":material/help:", use_container_width=True):
+            st.session_state.show_tutorial = True
+            st.rerun()
+    with c_sb2:
+        if st.button("Logout", icon=":material/logout:", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.current_user = ""
+            st.session_state.display_name = ""
+            st.rerun()
 
     st.divider()
     st.markdown("### :material/folder_open: Upload Market Data")
@@ -765,6 +795,28 @@ with st.sidebar:
     )
 
 
+# --- TOP-RIGHT IPHONE-STYLE LIGHT/DARK PILL TOGGLE (ONLY AFTER LOGIN) ---
+top_left, top_right = st.columns([5.5, 1])
+with top_right:
+    st.markdown(
+        f"""
+        <div class="ios-toggle-col">
+            <div class="ios-toggle-wrapper">
+                <div class="ios-pill">
+                    <div class="ios-knob">{pill_icon}</div>
+                </div>
+                <div class="ios-popup">{popup_text}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    btn_label = "Dark" if st.session_state.theme_mode == "Light" else "Light"
+    if st.button(f"Toggle {btn_label}", key="ios_theme_btn", use_container_width=True):
+        st.session_state.theme_mode = "Dark" if st.session_state.theme_mode == "Light" else "Light"
+        st.rerun()
+
+
 # --- MAIN EXECUTIVE DASHBOARD ---
 profile = detect_dataset_profile(df)
 
@@ -772,7 +824,7 @@ st.markdown(
     f"""
     <div class="exec-header">
         <h1>AI-Powered Competitor Intelligence & Market Analysis</h1>
-        <p>Detected Profile: <strong>{profile['type']}</strong> — Adaptive Graphs, Head-to-Head Competitor Comparison & SWOT</p>
+        <p>Detected Profile: <strong>{profile['type']}</strong> — Tailored Visual Graphs, Competitor Duel & SWOT Synthesis</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -783,12 +835,12 @@ if st.session_state.show_tutorial:
     st.markdown(
         """
         <div class="tutorial-box">
-            <h4>Quick Guide — Adaptive Competitor Analysis</h4>
+            <h4>Quick Guide — How to Explore Your Dashboard</h4>
             <ul style="margin:0; padding-left:1.2rem; font-size:0.92rem; line-height:1.6;">
-                <li><strong>1. Light / Dark Mode & Custom Colors (Top Bar):</strong> Switch between crisp Light Mode, high-contrast Dark Mode, and 5 accent themes anytime.</li>
-                <li><strong>2. File-Adaptive Graphs:</strong> The dashboard automatically detects your file type (Competitor Benchmark, Time-Series Sales, or Product Data) and builds tailored charts.</li>
-                <li><strong>3. Head-to-Head Competitor Duel:</strong> Select any two competitors/segments in the Analytics tab to compare them side-by-side and see who wins on each metric.</li>
-                <li><strong>4. Comprehensive SWOT & Live Web Intelligence:</strong> Generate a complete data-backed SWOT report or audit live competitor websites.</li>
+                <li><strong>1. Top-Right Theme Pill:</strong> Hover over the iPhone-style switch at the top right for a quick popup and click to toggle Light/Dark mode.</li>
+                <li><strong>2. File-Adaptive Graphs:</strong> Upload any CSV/Excel file—charts automatically adapt to explain pricing, ratings, market share %, and multi-metric performance.</li>
+                <li><strong>3. Head-to-Head Competitor Duel:</strong> Select any two competitors below to compare them side-by-side and see who wins on each metric.</li>
+                <li><strong>4. Comprehensive SWOT & Live Web Intelligence:</strong> Generate a complete SWOT report or compare live competitor websites.</li>
             </ul>
         </div>
         """,
@@ -826,7 +878,7 @@ tab_overview, tab_swot, tab_scraper = st.tabs(
     ]
 )
 
-# --- TAB 1: FILE-ADAPTIVE GRAPHS + HEAD-TO-HEAD COMPETITOR ANALYZER ---
+# --- TAB 1: ATTRACTIVE, SELF-EXPLANATORY GRAPHS + COMPETITOR DUEL ---
 with tab_overview:
     cat_options = df.select_dtypes(exclude="number").columns.tolist()
     default_cat = find_column(
@@ -847,12 +899,12 @@ with tab_overview:
 
     c_head, c_cat = st.columns([2.2, 1])
     with c_head:
-        st.subheader(f":material/analytics: Tailored Analytics ({profile['type']})")
-        st.caption("Graphs automatically adapt to your file's columns and structure.")
+        st.subheader(f":material/analytics: Visual Market & Competitor Story ({profile['type']})")
+        st.caption("Each chart is designed to clearly explain a different angle of your data with plain-English takeaways below.")
     with c_cat:
         selected_cat = (
             st.selectbox(
-                "Analyze Competitor / Segment By:",
+                "Compare Competitor / Segment By:",
                 options=cat_options,
                 index=cat_options.index(default_cat) if default_cat in cat_options else 0,
             )
@@ -860,8 +912,7 @@ with tab_overview:
             else None
         )
 
-    accent_hex = ACCENT_PRESETS[st.session_state.accent_name]["primary"]
-    chart_palette = [accent_hex, "#0284C7", "#10B981", "#F59E0B", "#E11D48", "#8B5CF6", "#06B6D4"]
+    modern_palette = ["#2563EB", "#0EA5E9", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"]
 
     if selected_cat and num_cols:
         agg_spec = {}
@@ -870,29 +921,28 @@ with tab_overview:
 
         summary_df = df.groupby(selected_cat, as_index=False).agg(agg_spec).head(12)
 
-        # ROW 1: Adapts if Time-Series Date exists vs Competitor Pricing
+        # ROW 1: Graph 1 (Pricing / Time-Series Area) + Graph 2 (Quality / Rating Lollipop-Style Bar)
         g1, g2 = st.columns(2)
 
         with g1:
             if profile["date_col"] and price_col:
-                # Time-Series Trend Graph for Sales/Date datasets
                 ts_df = df[[profile["date_col"], price_col]].dropna().copy()
                 ts_df[profile["date_col"]] = pd.to_datetime(ts_df[profile["date_col"]], errors="coerce")
                 ts_df = ts_df.dropna().sort_values(profile["date_col"])
                 if not ts_df.empty:
                     ts_grouped = ts_df.groupby(ts_df[profile["date_col"]].dt.to_period("M"))[price_col].sum().reset_index()
                     ts_grouped[profile["date_col"]] = ts_grouped[profile["date_col"]].astype(str)
-                    fig_trend = px.line(
+                    fig_trend = px.area(
                         ts_grouped,
                         x=profile["date_col"],
                         y=price_col,
                         markers=True,
-                        title=f"1. Time-Series Trend: {price_col} Over Time",
-                        color_discrete_sequence=[accent_hex],
+                        title=f"1. Growth Trajectory: {price_col} Over Time",
+                        color_discrete_sequence=["#2563EB"],
                     )
                     st.plotly_chart(style_plotly_chart(fig_trend), use_container_width=True)
                     st.markdown(
-                        f"<div class='chart-note'><b>Trend Insight:</b> Tracks monthly progression of <b>{price_col}</b> across your uploaded timeline.</div>",
+                        f"<div class='chart-note'><b>What This Explains:</b> Shows how <b>{price_col}</b> rises and falls across months so you can spot peak demand seasons.</div>",
                         unsafe_allow_html=True,
                     )
             elif price_col:
@@ -904,10 +954,15 @@ with tab_overview:
                     y=price_col,
                     text=price_col,
                     color=selected_cat,
-                    title=f"1. Competitor Pricing Comparison: Average {price_col}",
-                    color_discrete_sequence=chart_palette,
+                    title=f"1. Pricing Positioning: Average {price_col} vs. Market Benchmark",
+                    color_discrete_sequence=modern_palette,
                 )
-                fig_price.update_traces(texttemplate="%{text:,.1f}", textposition="outside")
+                fig_price.update_traces(
+                    texttemplate="%{text:,.1f}",
+                    textposition="outside",
+                    marker_line_width=0,
+                    opacity=0.92,
+                )
                 fig_price.add_hline(
                     y=avg_p,
                     line_dash="dash",
@@ -920,7 +975,7 @@ with tab_overview:
                 highest_p = p_df.iloc[0]
                 lowest_p = p_df.iloc[-1]
                 st.markdown(
-                    f"<div class='chart-note'><b>Pricing Insight:</b> <b>{highest_p[selected_cat]}</b> has the highest average ({highest_p[price_col]:,.1f}), while <b>{lowest_p[selected_cat]}</b> is lowest ({lowest_p[price_col]:,.1f}) vs. market average {avg_p:,.1f}.</div>",
+                    f"<div class='chart-note'><b>What This Explains:</b> <b>{highest_p[selected_cat]}</b> charges the highest ({highest_p[price_col]:,.1f}), whereas <b>{lowest_p[selected_cat]}</b> is the most affordable ({lowest_p[price_col]:,.1f}) compared to the red market average line ({avg_p:,.1f}).</div>",
                     unsafe_allow_html=True,
                 )
 
@@ -934,9 +989,9 @@ with tab_overview:
                     y=selected_cat,
                     orientation="h",
                     text=rating_col,
-                    color=selected_cat,
-                    title=f"2. Performance & Quality Ranking: {rating_col}",
-                    color_discrete_sequence=chart_palette,
+                    color=rating_col,
+                    color_continuous_scale="Tealgrn",
+                    title=f"2. Customer Satisfaction & Quality Score ({rating_col})",
                 )
                 fig_rating.update_traces(texttemplate="%{text:,.2f}", textposition="outside")
                 fig_rating.add_vline(
@@ -946,226 +1001,11 @@ with tab_overview:
                     annotation_text=f"Avg: {avg_r:,.2f}",
                     annotation_position="top right",
                 )
-                fig_rating.update_layout(showlegend=False)
                 st.plotly_chart(style_plotly_chart(fig_rating), use_container_width=True)
                 top_r = r_df.iloc[-1]
                 st.markdown(
-                    f"<div class='chart-note'><b>Quality Insight:</b> <b>{top_r[selected_cat]}</b> leads in {rating_col} with <b>{top_r[rating_col]:,.2f}</b> (Average: {avg_r:,.2f}).</div>",
+                    f"<div class='chart-note'><b>What This Explains:</b> Ranks every competitor from lowest to highest quality—<b>{top_r[selected_cat]}</b> wins customer trust with <b>{top_r[rating_col]:,.2f}</b>.</div>",
                     unsafe_allow_html=True,
                 )
             else:
-                cnt_df = df[selected_cat].value_counts().reset_index().head(10)
-                cnt_df.columns = [selected_cat, "Record_Count"]
-                fig_cnt = px.bar(
-                    cnt_df,
-                    x="Record_Count",
-                    y=selected_cat,
-                    orientation="h",
-                    text="Record_Count",
-                    color=selected_cat,
-                    title=f"2. Activity Volume: Records per {selected_cat}",
-                    color_discrete_sequence=chart_palette,
-                )
-                fig_cnt.update_traces(texttemplate="%{text:,}", textposition="outside")
-                fig_cnt.update_layout(showlegend=False)
-                st.plotly_chart(style_plotly_chart(fig_cnt), use_container_width=True)
-                st.markdown(
-                    f"<div class='chart-note'><b>Volume Insight:</b> Total records/transactions logged per {selected_cat}.</div>",
-                    unsafe_allow_html=True,
-                )
-
-        # ROW 2: Market Share Donut + Strategic Positioning Scatter
-        g3, g4 = st.columns(2)
-
-        with g3:
-            if share_col:
-                s_df = summary_df.sort_values(share_col, ascending=False)
-                fig_share = px.pie(
-                    s_df,
-                    names=selected_cat,
-                    values=share_col,
-                    hole=0.45,
-                    title=f"3. Market Share Breakdown (% of {share_col})",
-                    color_discrete_sequence=chart_palette,
-                )
-                fig_share.update_traces(
-                    textposition="inside",
-                    textinfo="percent+label",
-                    hovertemplate="<b>%{label}</b><br>Value: %{value:,.0f}<br>Share: %{percent}<extra></extra>",
-                )
-                st.plotly_chart(style_plotly_chart(fig_share), use_container_width=True)
-                top_s = s_df.iloc[0]
-                tot_s = s_df[share_col].sum()
-                pct_s = (top_s[share_col] / tot_s * 100) if tot_s else 0
-                st.markdown(
-                    f"<div class='chart-note'><b>Market Share Insight:</b> <b>{top_s[selected_cat]}</b> controls <b>{pct_s:.1f}%</b> of total {share_col}.</div>",
-                    unsafe_allow_html=True,
-                )
-
-        with g4:
-            if price_col and volume_col and price_col != volume_col:
-                fig_pos = px.scatter(
-                    summary_df,
-                    x=price_col,
-                    y=volume_col,
-                    size=share_col if share_col and (summary_df[share_col] > 0).all() else None,
-                    color=selected_cat,
-                    text=selected_cat,
-                    title=f"4. Strategic Positioning: {price_col} vs. {volume_col}",
-                    color_discrete_sequence=chart_palette,
-                )
-                fig_pos.update_traces(textposition="top center")
-                fig_pos.add_vline(x=summary_df[price_col].mean(), line_dash="dot", line_color="#94A3B8")
-                fig_pos.add_hline(y=summary_df[volume_col].mean(), line_dash="dot", line_color="#94A3B8")
-                fig_pos.update_layout(showlegend=False)
-                st.plotly_chart(style_plotly_chart(fig_pos), use_container_width=True)
-                st.markdown(
-                    f"<div class='chart-note'><b>Positioning Insight:</b> Compares <b>{price_col}</b> against <b>{volume_col}</b> to separate high-value leaders from overpriced players.</div>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                fig_dist = px.histogram(
-                    df,
-                    x=price_col or num_cols[0],
-                    nbins=20,
-                    title=f"4. Value Distribution of {price_col or num_cols[0]}",
-                    color_discrete_sequence=[accent_hex],
-                )
-                st.plotly_chart(style_plotly_chart(fig_dist), use_container_width=True)
-                st.markdown(
-                    "<div class='chart-note'><b>Distribution Insight:</b> Displays value spread across all records in your dataset.</div>",
-                    unsafe_allow_html=True,
-                )
-
-        # --- HEAD-TO-HEAD COMPETITOR COMPARISON DUEL ---
-        st.divider()
-        st.subheader(":material/swords: Head-to-Head Competitor Comparison")
-        st.caption("Select any two competitors or segments from your dataset to compare them directly across every metric.")
-
-        entities = summary_df[selected_cat].astype(str).tolist()
-        if len(entities) >= 2:
-            h1, h2 = st.columns(2)
-            with h1:
-                comp_a = st.selectbox("Select Competitor A:", options=entities, index=0)
-            with h2:
-                comp_b = st.selectbox("Select Competitor B:", options=entities, index=1)
-
-            row_a = summary_df[summary_df[selected_cat].astype(str) == comp_a].iloc[0]
-            row_b = summary_df[summary_df[selected_cat].astype(str) == comp_b].iloc[0]
-
-            duel_rows = []
-            for m_col in [c for c in summary_df.columns if c != selected_cat]:
-                val_a = float(row_a[m_col])
-                val_b = float(row_b[m_col])
-                diff = val_a - val_b
-                # For price/cost, lower is more competitive; for rating/sales/share, higher is better
-                if any(k in m_col.lower() for k in ["price", "cost"]):
-                    winner = comp_a if val_a < val_b else (comp_b if val_b < val_a else "Tie")
-                else:
-                    winner = comp_a if val_a > val_b else (comp_b if val_b > val_a else "Tie")
-                duel_rows.append(
-                    {
-                        "Metric": m_col,
-                        comp_a: round(val_a, 2),
-                        comp_b: round(val_b, 2),
-                        "Difference (A - B)": round(diff, 2),
-                        "Advantage": winner,
-                    }
-                )
-            st.dataframe(pd.DataFrame(duel_rows), use_container_width=True, hide_index=True)
-
-        # ROW 3: Complete Scorecard Table
-        st.subheader(":material/leaderboard: Unified Competitor & Segment Scorecard")
-        scorecard = summary_df.copy()
-        if share_col and scorecard[share_col].sum() > 0:
-            scorecard["Market_Share_%"] = (scorecard[share_col] / scorecard[share_col].sum() * 100).round(2)
-            scorecard = scorecard.sort_values("Market_Share_%", ascending=False)
-        scorecard.insert(0, "Rank", range(1, len(scorecard) + 1))
-        st.dataframe(scorecard, use_container_width=True, hide_index=True)
-
-    st.divider()
-    st.subheader(":material/table_view: Combined Dataset Preview (Top 500 Rows)")
-    st.dataframe(df.head(500), use_container_width=True, hide_index=True)
-
-# --- TAB 2: COMPREHENSIVE DATA-DRIVEN SWOT ANALYSIS ---
-with tab_swot:
-    st.subheader(":material/psychology: Comprehensive Data-Driven SWOT & Strategic Roadmap")
-    st.caption("Deep multi-dimensional SWOT synthesis calculated directly from your active dataset(s).")
-
-    if st.button("Generate Full Executive SWOT Report", icon=":material/auto_awesome:"):
-        swot = generate_comprehensive_swot(df)
-        st.info(swot["summary"])
-
-        s_col1, s_col2 = st.columns(2)
-        with s_col1:
-            st.markdown("### :material/trending_up: Strengths (Internal Advantages)")
-            for item in swot["strengths"]:
-                st.markdown(f"- {item}")
-
-            st.markdown("### :material/lightbulb: Opportunities (Growth Levers)")
-            for item in swot["opportunities"]:
-                st.markdown(f"- {item}")
-
-        with s_col2:
-            st.markdown("### :material/warning: Weaknesses (Internal Gaps)")
-            for item in swot["weaknesses"]:
-                st.markdown(f"- {item}")
-
-            st.markdown("### :material/shield: Threats (External Market Risks)")
-            for item in swot["threats"]:
-                st.markdown(f"- {item}")
-
-        st.divider()
-        st.markdown("### :material/flag: Prioritized Strategic Action Roadmap")
-        for act in swot["actions"]:
-            st.markdown(act)
-
-# --- TAB 3: LIVE WEB INTELLIGENCE ---
-with tab_scraper:
-    st.subheader(":material/language: Live Competitor Website & Positioning Intelligence")
-    st.caption("Analyze and compare multiple competitor URLs side-by-side (Headings, Value Proposition, Promo Signals, Price Mentions & Load Speed).")
-
-    default_urls = "https://www.limelight.pk/\nhttps://www.gulahmedshop.com/"
-    urls_input = st.text_area(
-        "Enter Competitor Website URLs (One URL per line):",
-        value=default_urls,
-        height=100,
-    )
-
-    if st.button("Run Live Competitor Web Audit", icon=":material/travel_explore:"):
-        url_list = [u.strip() for u in urls_input.splitlines() if u.strip().startswith("http")]
-        if not url_list:
-            st.warning("Please enter at least one valid URL starting with http:// or https://")
-        else:
-            results = []
-            with st.spinner(f"Auditing {len(url_list)} live website(s)..."):
-                for u in url_list:
-                    try:
-                        results.append(analyze_competitor_url(u))
-                    except Exception as e:
-                        st.error(f"Could not access {u}: {e}")
-
-            if results:
-                comp_table = pd.DataFrame(
-                    [
-                        {
-                            "Brand / Site": r["brand"],
-                            "Page Title": r["title"][:55],
-                            "Detected Promo Signals": r["promo_signals"],
-                            "Sample Prices Found": r["sample_prices"],
-                            "Links Count": r["links_count"],
-                            "Images Count": r["images_count"],
-                            "Response Time (s)": r["load_time_sec"],
-                        }
-                        for r in results
-                    ]
-                )
-                st.markdown("### :material/compare_arrows: Live Competitor Web Comparison Matrix")
-                st.dataframe(comp_table, use_container_width=True, hide_index=True)
-
-                for r in results:
-                    with st.expander(f"Detailed Intelligence Brief — {r['brand']} ({r['url']})", expanded=True):
-                        st.markdown(f"**Core Positioning (Meta Description):** {r['meta_desc']}")
-                        headings_str = " | ".join(r["headings"]) if r["headings"] else "No H1–H3 headings exposed"
-                        st.markdown(f"**Key Landing Page Headlines:** {headings_str}")
-                        st.markdown(f"**Active Promotional Keywords:** `{r['promo_signals']}` | **Detected Price Tags:** `{r['sample_prices']}`")
+                cnt_df = df[selected_cat].value_
