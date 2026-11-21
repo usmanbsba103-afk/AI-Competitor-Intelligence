@@ -1,8 +1,11 @@
+import sqlite3
+import hashlib
+import time
+import re
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
 # --- PAGE CONFIGURATION ---
@@ -12,6 +15,69 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# --- PERSISTENT SQLITE USER DATABASE ---
+DB_PATH = "users_auth.db"
+
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password_hash TEXT NOT NULL,
+            full_name TEXT
+        )
+        """
+    )
+    # Ensure default demo account exists
+    demo_hash = hashlib.sha256("fyp2026".encode()).hexdigest()
+    c.execute(
+        "INSERT OR IGNORE INTO users (username, password_hash, full_name) VALUES (?, ?, ?)",
+        ("admin", demo_hash, "Admin Analyst"),
+    )
+    conn.commit()
+    conn.close()
+
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.strip().encode()).hexdigest()
+
+
+def register_user(username: str, password: str, full_name: str = "") -> tuple[bool, str]:
+    uname = username.strip().lower()
+    if not uname or not password.strip():
+        return False, "Username and password cannot be empty."
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT username FROM users WHERE username = ?", (uname,))
+    if c.fetchone():
+        conn.close()
+        return False, "This username is already registered. Please switch to Sign In."
+    c.execute(
+        "INSERT INTO users (username, password_hash, full_name) VALUES (?, ?, ?)",
+        (uname, hash_password(password), full_name.strip() or uname.title()),
+    )
+    conn.commit()
+    conn.close()
+    return True, "Account permanently saved!"
+
+
+def verify_user(username: str, password: str) -> tuple[bool, str]:
+    uname = username.strip().lower()
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT password_hash, full_name FROM users WHERE username = ?", (uname,))
+    row = c.fetchone()
+    conn.close()
+    if row and row[0] == hash_password(password):
+        return True, row[1] or uname.title()
+    return False, ""
+
+
+init_db()
 
 # --- CLEAN, BRIGHT & EASY-TO-READ LIGHT THEME ---
 st.markdown(
@@ -34,7 +100,7 @@ st.markdown(
             color: #1E293B !important;
         }
 
-        /* Light & Welcoming Executive Header */
+        /* Executive Header */
         .exec-header {
             background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
             padding: 1.6rem 2rem;
@@ -84,7 +150,7 @@ st.markdown(
             margin-bottom: 0.35rem;
         }
         .kpi-value {
-            font-size: 1.6rem;
+            font-size: 1.55rem;
             font-weight: 800;
             color: #0F172A;
             line-height: 1.2;
@@ -116,7 +182,7 @@ st.markdown(
             display: none;
         }
 
-        /* Light Tutorial Box */
+        /* Tutorial Box */
         .tutorial-box {
             background-color: #FFFFFF;
             border: 1px solid #BAE6FD;
@@ -130,6 +196,16 @@ st.markdown(
             margin: 0 0 0.45rem 0;
             color: #0369A1;
             font-weight: 700;
+        }
+
+        /* SWOT Cards */
+        .swot-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
         }
 
         /* Clean Emerald Buttons */
@@ -154,13 +230,13 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "current_user" not in st.session_state:
     st.session_state.current_user = ""
-if "users_db" not in st.session_state:
-    st.session_state.users_db = {"admin": "fyp2026"}
+if "display_name" not in st.session_state:
+    st.session_state.display_name = ""
 if "show_tutorial" not in st.session_state:
     st.session_state.show_tutorial = True
 
 
-# --- 1. DIRECT LOGIN & SIGN-UP PORTAL ---
+# --- 1. PERSISTENT LOGIN & DIRECT SIGN-UP PORTAL ---
 def render_login_portal():
     col1, col2, col3 = st.columns([1, 1.45, 1])
     with col2:
@@ -168,45 +244,45 @@ def render_login_portal():
             """
             <div class="exec-header" style="text-align:center; margin-top:1.5rem;">
                 <h1>Competitor Intelligence Portal</h1>
-                <p>Clear, Visual & Automated Market Analysis System</p>
+                <p>Persistent Account Access & Automated Market Analytics</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        tab_login, tab_register = st.tabs(["Sign In", "Create Account (Direct Login)"])
+        tab_login, tab_register = st.tabs(["Sign In (Existing Account)", "Create New Account"])
 
         with tab_login:
             with st.form("login_form"):
-                username = st.text_input("Username", placeholder="Enter username")
-                password = st.text_input("Password", type="password", placeholder="Enter password")
-                submitted = st.form_submit_button("Sign In", use_container_width=True)
+                username = st.text_input("Username", placeholder="Enter your saved username")
+                password = st.text_input("Password", type="password", placeholder="Enter your password")
+                submitted = st.form_submit_button("Sign In to Dashboard", use_container_width=True)
                 if submitted:
-                    if username in st.session_state.users_db and st.session_state.users_db[username] == password:
+                    ok, dname = verify_user(username, password)
+                    if ok:
                         st.session_state.authenticated = True
-                        st.session_state.current_user = username
-                        st.session_state.show_tutorial = True
+                        st.session_state.current_user = username.strip().lower()
+                        st.session_state.display_name = dname
                         st.rerun()
                     else:
-                        st.error("Invalid credentials. Demo account: admin / fyp2026")
-            st.caption("Demo Access — Username: `admin` | Password: `fyp2026`")
+                        st.error("Invalid username or password. Please check your credentials or create an account.")
+            st.caption("Default Demo Login — Username: `admin` | Password: `fyp2026`")
 
         with tab_register:
             with st.form("register_form"):
-                new_user = st.text_input("Choose Username", placeholder="e.g., usman_analyst")
-                new_pass = st.text_input("Create Password", type="password", placeholder="Enter password")
-                reg_submit = st.form_submit_button("Create Account & Login Now", use_container_width=True)
+                full_name = st.text_input("Full Name", placeholder="e.g., Muhammad Usman")
+                new_user = st.text_input("Choose Username", placeholder="e.g., usman123")
+                new_pass = st.text_input("Create Password", type="password", placeholder="Choose a password")
+                reg_submit = st.form_submit_button("Create Account & Login Directly", use_container_width=True)
                 if reg_submit:
-                    if new_user.strip() and new_pass.strip():
-                        if new_user in st.session_state.users_db:
-                            st.warning("Username already exists. Please sign in or pick another.")
-                        else:
-                            st.session_state.users_db[new_user.strip()] = new_pass.strip()
-                            st.session_state.authenticated = True
-                            st.session_state.current_user = new_user.strip()
-                            st.session_state.show_tutorial = True
-                            st.rerun()
+                    ok, msg = register_user(new_user, new_pass, full_name)
+                    if ok:
+                        st.session_state.authenticated = True
+                        st.session_state.current_user = new_user.strip().lower()
+                        st.session_state.display_name = full_name.strip() or new_user.strip().title()
+                        st.session_state.show_tutorial = True
+                        st.rerun()
                     else:
-                        st.warning("Please enter both username and password.")
+                        st.warning(msg)
 
 
 if not st.session_state.authenticated:
@@ -253,7 +329,7 @@ def build_adaptive_kpis(df: pd.DataFrame, file_label: str) -> list:
         {
             "label": "Total Records Analyzed",
             "value": f"{total_rows:,}",
-            "detail": f"File: {file_label} | {total_cols} columns ({len(num_cols)} numeric, {len(cat_cols)} categorical).",
+            "detail": f"Source: {file_label} | {total_cols} columns ({len(num_cols)} numeric, {len(cat_cols)} text).",
         }
     ]
 
@@ -268,15 +344,15 @@ def build_adaptive_kpis(df: pd.DataFrame, file_label: str) -> list:
             {
                 "label": f"Average {price_col}",
                 "value": f"PKR {avg_v:,.0f}",
-                "detail": f"Lowest: PKR {min_v:,.0f} | Highest: PKR {max_v:,.0f} | Sum: PKR {df[price_col].sum():,.0f}",
+                "detail": f"Min: PKR {min_v:,.0f} | Max: PKR {max_v:,.0f} | Total: PKR {df[price_col].sum():,.0f}",
             }
         )
     else:
         kpis.append(
             {
-                "label": "Data Quality Score",
+                "label": "Data Completeness",
                 "value": f"{(1 - df.isna().mean().mean()) * 100:.1f}%",
-                "detail": f"Complete non-empty entries across {total_rows:,} rows.",
+                "detail": f"Complete non-null values across all {total_rows:,} records.",
             }
         )
 
@@ -297,7 +373,7 @@ def build_adaptive_kpis(df: pd.DataFrame, file_label: str) -> list:
                 {
                     "label": f"Total {sec_col}",
                     "value": f"{df[sec_col].sum():,.0f}",
-                    "detail": f"Average per record: {df[sec_col].mean():,.2f} | Maximum: {df[sec_col].max():,.2f}",
+                    "detail": f"Mean per record: {df[sec_col].mean():,.2f} | Peak: {df[sec_col].max():,.2f}",
                 }
             )
         elif price_col:
@@ -328,7 +404,7 @@ def build_adaptive_kpis(df: pd.DataFrame, file_label: str) -> list:
             {
                 "label": "Market Leader",
                 "value": str(leader_row[name_col]),
-                "detail": f"Leads with {leader_row[share_col]}% share | Strength: {leader_row.get('Key_Advantage', 'Top rank')}",
+                "detail": f"Leads with {leader_row[share_col]}% share | Advantage: {leader_row.get('Key_Advantage', 'Top rank')}",
             }
         )
     elif name_col and not df[name_col].dropna().empty:
@@ -354,101 +430,163 @@ def build_adaptive_kpis(df: pd.DataFrame, file_label: str) -> list:
     return kpis
 
 
-def generate_smart_swot(df: pd.DataFrame) -> str:
+# --- COMPREHENSIVE, DEEP DATA-DRIVEN SWOT ENGINE ---
+def generate_comprehensive_swot(df: pd.DataFrame) -> dict:
     total_rows = len(df)
-    if "Competitor_Name" in df.columns and "Price" in df.columns:
-        avg_p = df["Price"].mean()
-        min_row = df.loc[df["Price"].idxmin()]
-        max_row = df.loc[df["Price"].idxmax()]
-        top_rating = df.loc[df["Customer_Rating"].idxmax()] if "Customer_Rating" in df.columns else max_row
-        leader = df.loc[df["Market_Share"].idxmax()] if "Market_Share" in df.columns else max_row
-
-        return f"""
-**Strengths**
-* Tracks **{total_rows} active competitors** with a clear market average price of **PKR {avg_p:,.0f}**.
-* **{top_rating['Competitor_Name']}** achieves the highest customer satisfaction (**{top_rating.get('Customer_Rating', 'N/A')} / 5.0**).
-* **{leader['Competitor_Name']}** commands the largest market footprint at **{leader.get('Market_Share', 'N/A')}%** share.
-
-**Weaknesses**
-* **{max_row['Competitor_Name']}** faces the steepest entry barrier at **PKR {max_row['Price']:,.0f}**.
-* Mid-market players face margin pressure from **{min_row['Competitor_Name']}** (**PKR {min_row['Price']:,.0f}**).
-* Heavy share concentration among top players restricts smaller rivals.
-
-**Opportunities**
-* Capture value-driven buyers in the **PKR {min_row['Price']:,.0f} – PKR {avg_p:,.0f}** pricing sweet spot.
-* Pair high customer ratings (**>4.5**) with warranty bundles to justify premium pricing.
-* Target customers dissatisfied with low-cost, lower-rated competitors.
-
-**Threats**
-* Aggressive price cuts by **{min_row['Competitor_Name']}** could spark a sector-wide price war.
-* Market leader **{leader['Competitor_Name']}** holds scale advantages in marketing and distribution.
-* Rising price sensitivity may shift demand away from high-ticket offerings.
-
-**Top 3 Strategic Actions**
-1. **Optimize Core Price Around PKR {avg_p:,.0f}:** Stay competitive against average market pricing while adding service value.
-2. **Promote Quality Leadership:** Use **{top_rating.get('Customer_Rating', 4.6)}/5.0** rating proof points in campaigns.
-3. **Counter {leader['Competitor_Name']} in Key Segments:** Launch targeted loyalty offers to protect market share.
-"""
-
-    primary_col = find_column(df, ["salesamount", "price", "amount", "sales", "revenue"], numeric_only=True)
+    num_cols = df.select_dtypes(include="number").columns.tolist()
     cat_cols = df.select_dtypes(exclude="number").columns.tolist()
-    top_cat = str(df[cat_cols[0]].dropna().value_counts().index[0]) if cat_cols else "Primary Segment"
-    top_cat_share = (df[cat_cols[0]].value_counts().iloc[0] / total_rows * 100) if cat_cols else 100.0
-    p_mean = df[primary_col].mean() if primary_col else 0
-    p_max = df[primary_col].max() if primary_col else 0
-    p_sum = df[primary_col].sum() if primary_col else 0
 
-    return f"""
-**Strengths**
-* Full dataset analysis across **{total_rows:,} records** and **{len(df.columns)} attributes**.
-* Leading category **{top_cat}** accounts for **{top_cat_share:.1f}%** of total activity.
-* Average **{primary_col or 'Metric'}** is **PKR {p_mean:,.2f}** with total cumulative volume of **PKR {p_sum:,.0f}**.
+    cat_col = find_column(
+        df, ["competitor", "brand", "product", "category", "territory", "country", "name"], numeric_only=False
+    )
+    primary_metric = find_column(
+        df, ["price", "salesamount", "revenue", "amount", "sales", "cost"], numeric_only=True
+    )
+    rating_metric = find_column(df, ["rating", "score", "review", "satisfaction"], numeric_only=True)
+    share_metric = find_column(df, ["share", "monthly_sales", "quantity", "volume", "units"], numeric_only=True)
 
-**Weaknesses**
-* High reliance on **{top_cat}** creates concentration risk if segment demand slows.
-* Large gap between average (**{p_mean:,.2f}**) and peak (**{p_max:,.2f}**) shows uneven order distribution.
-* Adding direct competitor pricing columns would enable deeper price-war simulations.
+    # Aggregate by main category/competitor if available
+    if cat_col and primary_metric:
+        agg_dict = {primary_metric: ["mean", "sum", "min", "max", "count"]}
+        if rating_metric and rating_metric != primary_metric:
+            agg_dict[rating_metric] = "mean"
+        if share_metric and share_metric not in [primary_metric, rating_metric]:
+            agg_dict[share_metric] = "sum"
 
-**Opportunities**
-* Replicate **{top_cat}** best practices across underperforming categories.
-* Upsell mid-tier orders to raise average **{primary_col or 'Metric'}** above **PKR {p_mean:,.2f}**.
-* Monitor high-value transactions across all **{total_rows:,} rows** for margin expansion.
+        grouped = df.groupby(cat_col).agg(agg_dict)
+        grouped.columns = ["_".join(col).strip() for col in grouped.columns.values]
+        grouped = grouped.reset_index()
 
-**Threats**
-* Any downturn in **{top_cat}** directly impacts total volume (**PKR {p_sum:,.0f}**).
-* Competitive discounting in high-volume segments can erode profit margins.
-* Seasonal demand swings require proactive inventory and pricing adjustments.
+        mean_col = f"{primary_metric}_mean"
+        sum_col = f"{primary_metric}_sum"
+        cnt_col = f"{primary_metric}_count"
 
-**Top 3 Strategic Actions**
-1. **Safeguard Top Segment ({top_cat}):** Focus retention campaigns where **{top_cat_share:.1f}%** of volume originates.
-2. **Boost Below-Average Tiers:** Offer bundled deals on items below **PKR {p_mean:,.2f}**.
-3. **Track Weekly Benchmark Shifts:** Monitor **{primary_col or 'key metrics'}** continuously for early market signals.
-"""
+        grouped = grouped.sort_values(sum_col, ascending=False)
+        top_player = grouped.iloc[0]
+        bottom_player = grouped.iloc[-1]
+        highest_avg_player = grouped.loc[grouped[mean_col].idxmax()]
+        lowest_avg_player = grouped.loc[grouped[mean_col].idxmin()]
 
+        overall_avg = df[primary_metric].mean()
+        overall_median = df[primary_metric].median()
+        overall_sum = df[primary_metric].sum()
+        overall_std = df[primary_metric].std() if total_rows > 1 else 0
+        top_share_pct = (top_player[sum_col] / overall_sum * 100) if overall_sum else 0
+        top2_share_pct = (grouped.head(2)[sum_col].sum() / overall_sum * 100) if overall_sum else 0
+        price_spread = highest_avg_player[mean_col] - lowest_avg_player[mean_col]
 
-def scrape_competitor_page(url: str) -> dict:
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    resp = requests.get(url, headers=headers, timeout=12)
-    resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, "html.parser")
-    title = soup.title.string.strip() if soup.title and soup.title.string else "N/A"
-    meta_desc = ""
-    meta_tag = soup.find("meta", attrs={"name": "description"})
-    if meta_tag and meta_tag.get("content"):
-        meta_desc = meta_tag["content"].strip()
-    headings = [h.get_text(" ", strip=True) for h in soup.find_all(["h1", "h2"])[:6] if h.get_text(strip=True)]
-    links_count = len(soup.find_all("a"))
+        rating_insight = ""
+        if rating_metric and f"{rating_metric}_mean" in grouped.columns:
+            r_col = f"{rating_metric}_mean"
+            best_rated = grouped.loc[grouped[r_col].idxmax()]
+            worst_rated = grouped.loc[grouped[r_col].idxmin()]
+            rating_insight = f"Customer satisfaction peaks with **{best_rated[cat_col]}** ({best_rated[r_col]:.2f}/5.0) vs. **{worst_rated[cat_col]}** ({worst_rated[r_col]:.2f}/5.0)."
+        else:
+            rating_insight = f"Dataset tracks **{len(num_cols)} quantitative KPIs** and **{len(cat_cols)} categorical dimensions** across **{total_rows:,} records**."
+
+        strengths = [
+            f"**Clear Market Dominance by {top_player[cat_col]}:** Leads the dataset with **PKR {top_player[sum_col]:,.0f}** in total {primary_metric} (**{top_share_pct:.1f}%** of total market volume across {int(top_player[cnt_col]):,} records).",
+            f"**Strong Benchmark Baseline:** Overall market average for {primary_metric} stands at **PKR {overall_avg:,.2f}** (Median: **PKR {overall_median:,.2f}**), establishing a reliable performance threshold.",
+            f"**Quality & Satisfaction Leadership:** {rating_insight}",
+            f"**Multi-Segment Breadth:** Covers **{grouped[cat_col].nunique()} distinct competitors/segments** ({', '.join(grouped[cat_col].astype(str).head(5).tolist())}), enabling accurate cross-segment benchmarking.",
+        ]
+
+        weaknesses = [
+            f"**High Revenue/Volume Concentration:** The top 2 players (**{', '.join(grouped[cat_col].astype(str).head(2).tolist())}** ) control **{top2_share_pct:.1f}%** of total {primary_metric}, leaving remaining segments under-monetized.",
+            f"**Lagging Tail Performance ({bottom_player[cat_col]}):** Contributes only **PKR {bottom_player[sum_col]:,.0f}** (**{(bottom_player[sum_col]/overall_sum*100) if overall_sum else 0:.1f}%** share), indicating weak customer pull or distribution gaps.",
+            f"**Wide Pricing / Value Dispersion:** A **PKR {price_spread:,.2f}** gap separates highest-priced **{highest_avg_player[cat_col]}** (avg **PKR {highest_avg_player[mean_col]:,.0f}**) from budget leader **{lowest_avg_player[cat_col]}** (avg **PKR {lowest_avg_player[mean_col]:,.0f}**).",
+            f"**High Volatility Across Transactions:** Standard deviation of **PKR {overall_std:,.2f}** shows inconsistent order sizes rather than predictable recurring volume.",
+        ]
+
+        opportunities = [
+            f"**Capture the Mid-Market Corridor (PKR {lowest_avg_player[mean_col]:,.0f} – PKR {overall_avg:,.0f}):** Position value-bundled offers slightly below the **PKR {overall_avg:,.0f}** average to win price-sensitive buyers from **{highest_avg_player[cat_col]}**.",
+            f"**Replicate {top_player[cat_col]}'s Playbook in Mid-Tier Segments:** Scaling top-performing product/pricing strategies into lower-share segments can unlock an estimated **15%–25% uplift** in total {primary_metric}.",
+            f"**Premium Upsell Above Median (PKR {overall_median:,.0f}):** Customers already purchasing above the median threshold represent prime targets for extended warranties, loyalty tiers, and cross-selling.",
+            f"**Data-Driven SKU & Regional Optimization:** Eliminating bottom-decile underperformers and reallocating budget toward high-velocity segments directly improves net margins.",
+        ]
+
+        threats = [
+            f"**Aggressive Price Undercutting by {lowest_avg_player[cat_col]}:** Operating at an average of **PKR {lowest_avg_player[mean_col]:,.0f}** (**{((overall_avg - lowest_avg_player[mean_col])/overall_avg*100) if overall_avg else 0:.1f}%** below market average) threatens to trigger a margin-eroding price war.",
+            f"**Over-Reliance on {top_player[cat_col]} ({top_share_pct:.1f}% Share):** Any competitive disruption or seasonal slowdown in this single segment could severely impact overall business performance.",
+            f"**Margin Compression in High-Cost Tiers:** Competitors priced above **PKR {highest_avg_player[mean_col]:,.0f}** risk customer churn if perceived quality does not clearly outperform mid-tier alternatives.",
+            f"**Market Saturation & Rapid Imitation:** Without continuous monitoring of competitor pricing and web positioning, differentiation erodes quickly.",
+        ]
+
+        actions = [
+            f"**1. Immediate Pricing Calibration (0–30 Days):** Anchor core offerings near **PKR {overall_avg:,.0f}** (market average) while introducing an entry-level fighter SKU around **PKR {lowest_avg_player[mean_col]:,.0f}** to counter budget rivals.",
+            f"**2. Defend & Expand Leader Segment ({top_player[cat_col]}):** Allocate priority retention marketing to protect the **{top_share_pct:.1f}%** core share while bundling high-margin add-ons.",
+            f"**3. Turnaround Plan for {bottom_player[cat_col]} (30–60 Days):** Audit why **{bottom_player[cat_col]}** trails at **PKR {bottom_player[sum_col]:,.0f}**—either reposition with targeted promotions or reallocate resources to top-3 segments.",
+            f"**4. Automated Weekly KPI & Competitor Web Audits (Ongoing):** Track shifts against the **PKR {overall_median:,.0f}** median benchmark and monitor rival website changes via the Live Web Intelligence module.",
+        ]
+
+        return {
+            "summary": f"Comprehensive statistical audit of **{total_rows:,} records** across **{grouped[cat_col].nunique()} competitors/segments**, analyzing **{primary_metric}** (Total: **PKR {overall_sum:,.0f}** | Mean: **PKR {overall_avg:,.2f}** | Median: **PKR {overall_median:,.2f}**).",
+            "strengths": strengths,
+            "weaknesses": weaknesses,
+            "opportunities": opportunities,
+            "threats": threats,
+            "actions": actions,
+        }
+
     return {
-        "title": title,
-        "meta_desc": meta_desc or "No meta description exposed on landing page.",
-        "headings": headings,
-        "links_count": links_count,
+        "summary": f"Dataset audit across **{total_rows:,} records** and **{len(df.columns)} columns**.",
+        "strengths": [f"Tracks {total_rows:,} structured records across {len(df.columns)} attributes."],
+        "weaknesses": ["No numeric pricing/sales column detected for financial variance modeling."],
+        "opportunities": ["Add numeric revenue, price, or rating columns to unlock deeper competitive benchmarking."],
+        "threats": ["Limited quantitative tracking may delay detection of market shifts."],
+        "actions": ["1. Upload a dataset containing numeric price, sales, or rating columns for full statistical SWOT synthesis."],
     }
 
 
-# --- SIDEBAR (LIGHT & CLEAN) ---
+# --- UPGRADED MULTI-FEATURE WEB INTELLIGENCE SCRAPER ---
+def analyze_competitor_url(url: str) -> dict:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    }
+    start_t = time.time()
+    resp = requests.get(url, headers=headers, timeout=14)
+    load_time = round(time.time() - start_t, 2)
+    resp.raise_for_status()
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    title = soup.title.string.strip() if soup.title and soup.title.string else "No Title Found"
+
+    meta_desc = ""
+    meta_tag = soup.find("meta", attrs={"name": "description"}) or soup.find("meta", attrs={"property": "og:description"})
+    if meta_tag and meta_tag.get("content"):
+        meta_desc = meta_tag["content"].strip()
+
+    og_site = ""
+    og_tag = soup.find("meta", attrs={"property": "og:site_name"})
+    if og_tag and og_tag.get("content"):
+        og_site = og_tag["content"].strip()
+
+    headings = [h.get_text(" ", strip=True) for h in soup.find_all(["h1", "h2", "h3"])[:8] if h.get_text(strip=True)]
+    links = soup.find_all("a")
+    images = soup.find_all("img")
+
+    page_text = soup.get_text(" ", strip=True).lower()
+    promo_keywords = [kw for kw in ["sale", "discount", "% off", "free shipping", "new arrival", "flat", "winter", "summer", "warranty"] if kw in page_text]
+    prices_found = re.findall(r"(?:PKR|Rs\.?|USD|\$)\s?[\d,]+(?:\.\d{2})?", soup.get_text(" ", strip=True))[:6]
+
+    return {
+        "url": url,
+        "brand": og_site or title.split("|")[0].split("-")[0].strip()[:35],
+        "title": title,
+        "meta_desc": meta_desc or "No public meta description exposed.",
+        "headings": headings,
+        "links_count": len(links),
+        "images_count": len(images),
+        "load_time_sec": load_time,
+        "promo_signals": ", ".join(promo_keywords).upper() if promo_keywords else "None Detected",
+        "sample_prices": ", ".join(prices_found) if prices_found else "Dynamic / JS-rendered pricing",
+    }
+
+
+# --- SIDEBAR (MULTIPLE FILES + PERSISTENT ACCOUNT) ---
 with st.sidebar:
-    st.markdown(f"### :material/account_circle: Welcome, {st.session_state.current_user.title()}")
+    st.markdown(f"### :material/account_circle: {st.session_state.display_name}")
+    st.caption(f"Logged in as `@{st.session_state.current_user}`")
     col_s1, col_s2 = st.columns(2)
     with col_s1:
         if st.button("Tutorial", icon=":material/help:", use_container_width=True):
@@ -458,28 +596,40 @@ with st.sidebar:
         if st.button("Logout", icon=":material/logout:", use_container_width=True):
             st.session_state.authenticated = False
             st.session_state.current_user = ""
+            st.session_state.display_name = ""
             st.rerun()
 
     st.divider()
-    st.markdown("### :material/upload_file: Upload Market Data")
-    uploaded_file = st.file_uploader("Choose CSV or Excel File", type=["csv", "xlsx"])
+    st.markdown("### :material/folder_open: Upload Multiple Datasets")
+    uploaded_files = st.file_uploader(
+        "Upload 1 or More CSV / Excel Files",
+        type=["csv", "xlsx"],
+        accept_multiple_files=True,
+    )
 
-    if uploaded_file is not None:
-        try:
-            if uploaded_file.name.endswith(".csv"):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = pd.read_excel(uploaded_file)
-            file_label = uploaded_file.name
-            st.success(f"Active File: {file_label}")
-        except Exception as e:
-            st.error(f"File error: {e}")
+    if uploaded_files:
+        dfs = []
+        loaded_names = []
+        for f in uploaded_files:
+            try:
+                temp_df = pd.read_csv(f) if f.name.endswith(".csv") else pd.read_excel(f)
+                temp_df["Source_File"] = f.name
+                dfs.append(temp_df)
+                loaded_names.append(f.name)
+            except Exception as e:
+                st.error(f"Error reading {f.name}: {e}")
+
+        if dfs:
+            df = pd.concat(dfs, ignore_index=True)
+            file_label = f"{len(loaded_names)} File(s): {', '.join(loaded_names)}"
+            st.success(f"Loaded {len(loaded_names)} file(s) ({len(df):,} total rows)")
+        else:
             df = load_sample_data()
             file_label = "Default Benchmark"
     else:
         df = load_sample_data()
         file_label = "Default Benchmark"
-        st.info("Showing Default Benchmark Data")
+        st.info("Using Default Benchmark Data")
 
     sample_csv = load_sample_data().to_csv(index=False).encode("utf-8")
     st.download_button(
@@ -497,7 +647,7 @@ st.markdown(
     """
     <div class="exec-header">
         <h1>AI-Powered Competitor Intelligence & Market Analysis</h1>
-        <p>Clear Visual Benchmarking, Competitor Performance Breakdown & Strategic SWOT Insights</p>
+        <p>Multi-File Benchmarking, Clear Visual Analytics, Deep SWOT Synthesis & Live Web Intelligence</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -508,12 +658,12 @@ if st.session_state.show_tutorial:
     st.markdown(
         """
         <div class="tutorial-box">
-            <h4>Quick Guide — How This Dashboard Works</h4>
+            <h4>Quick Guide — Platform Capabilities</h4>
             <ul style="margin:0; padding-left:1.2rem; color:#334155; font-size:0.92rem; line-height:1.6;">
-                <li><strong>Step 1 — Upload File (Left Sidebar):</strong> Upload any CSV or Excel dataset. All KPIs and graphs automatically adjust to your file.</li>
-                <li><strong>Step 2 — Hover on KPI Cards:</strong> Move your mouse cursor over any KPI card below to see exact minimum, maximum, and total breakdowns.</li>
-                <li><strong>Step 3 — Detailed Competitor Graphs:</strong> Open <em>Market Analytics & Graphs</em> to inspect competitor rankings, market average lines, share %, and positioning quadrants.</li>
-                <li><strong>Step 4 — SWOT & Live Web Analyzer:</strong> Generate an instant SWOT report or analyze any competitor's live website URL.</li>
+                <li><strong>1. Upload Multiple Files (Left Sidebar):</strong> Select one or several CSV/Excel files at once to merge and compare them side-by-side.</li>
+                <li><strong>2. Hover on KPI Cards:</strong> Move your cursor over any KPI card below to reveal minimum, maximum, and total breakdowns.</li>
+                <li><strong>3. Easy-to-Read Graphs:</strong> Every chart shows exact numbers on bars/slices and a red Market Average line for instant comparison.</li>
+                <li><strong>4. Comprehensive SWOT & Multi-URL Web Intelligence:</strong> Generate a full data-backed SWOT report or compare multiple live competitor websites at once.</li>
             </ul>
         </div>
         """,
@@ -545,29 +695,41 @@ st.divider()
 # --- NAVIGATION TABS ---
 tab_overview, tab_swot, tab_scraper = st.tabs(
     [
-        ":material/monitoring: Market Analytics & Detailed Graphs",
-        ":material/psychology: Executive SWOT Report",
+        ":material/monitoring: Clear Market Graphs & Scorecard",
+        ":material/psychology: Comprehensive SWOT Analysis",
         ":material/language: Live Web Intelligence",
     ]
 )
 
-# --- TAB 1: COMPREHENSIVE, ACCURATE COMPETITOR GRAPHS & ANALYSIS ---
+# --- TAB 1: CRYSTAL-CLEAR & DETAILED GRAPHS ---
 with tab_overview:
-    cat_col = find_column(
-        df, ["competitor", "brand", "product", "category", "territory", "country", "name"], numeric_only=False
+    cat_options = [
+        c for c in df.select_dtypes(exclude="number").columns.tolist()
+    ]
+    default_cat = find_column(
+        df, ["competitor", "brand", "product", "category", "territory", "country", "source_file", "name"], numeric_only=False
     )
     num_cols = df.select_dtypes(include="number").columns.tolist()
     default_val = find_column(df, ["price", "salesamount", "amount", "sales", "revenue"], numeric_only=True)
 
-    # Interactive Metric Selector so user can analyze ANY numeric column in their file
-    ctrl1, ctrl2 = st.columns([2, 1])
-    with ctrl1:
-        st.subheader(":material/analytics: Deep Competitor & Market Visual Analysis")
-        st.caption("Hover over any bar, slice, or point in the graphs below for exact figures and comparisons.")
-    with ctrl2:
+    c_head, c_cat, c_met = st.columns([1.6, 1, 1])
+    with c_head:
+        st.subheader(":material/analytics: Visual Market & Competitor Breakdown")
+        st.caption("Every chart displays exact values and market averages so anyone can understand trends immediately.")
+    with c_cat:
+        selected_cat = (
+            st.selectbox(
+                "Group / Compare By:",
+                options=cat_options,
+                index=cat_options.index(default_cat) if default_cat in cat_options else 0,
+            )
+            if cat_options
+            else None
+        )
+    with c_met:
         selected_metric = (
             st.selectbox(
-                "Select Metric to Analyze:",
+                "Metric to Analyze:",
                 options=num_cols,
                 index=num_cols.index(default_val) if default_val in num_cols else 0,
             )
@@ -575,41 +737,42 @@ with tab_overview:
             else None
         )
 
-    light_palette = ["#059669", "#0284C7", "#D97706", "#7C3AED", "#E11D48", "#0D9488", "#2563EB"]
+    light_palette = ["#059669", "#0284C7", "#D97706", "#7C3AED", "#E11D48", "#0D9488", "#2563EB", "#4F46E5"]
 
-    if cat_col and selected_metric:
-        # Prepare clean aggregated summary per competitor/category
+    if selected_cat and selected_metric:
         summary_df = (
-            df.groupby(cat_col, as_index=False)
+            df.groupby(selected_cat, as_index=False)
             .agg(
                 Average_Value=(selected_metric, "mean"),
                 Total_Value=(selected_metric, "sum"),
-                Record_Count=(selected_metric, "count"),
+                Min_Value=(selected_metric, "min"),
+                Max_Value=(selected_metric, "max"),
+                Records=(selected_metric, "count"),
             )
             .sort_values("Total_Value", ascending=False)
             .head(12)
         )
         overall_avg = summary_df["Average_Value"].mean()
         total_sum = summary_df["Total_Value"].sum()
-        summary_df["Market_Share_%"] = (summary_df["Total_Value"] / total_sum * 100).round(2) if total_sum else 0
-        summary_df["Vs_Market_Avg_%"] = (
+        summary_df["Share_%"] = (summary_df["Total_Value"] / total_sum * 100).round(2) if total_sum else 0
+        summary_df["Diff_From_Avg_%"] = (
             ((summary_df["Average_Value"] - overall_avg) / overall_avg * 100).round(1) if overall_avg else 0
         )
 
-        # ROW 1: Detailed Bar Comparison with Market Average Line + Exact Share Donut
+        # ROW 1: Clear Bar Chart with Exact Labels + Market Share Donut
         g1, g2 = st.columns([1.35, 1])
 
         with g1:
             fig_bar = px.bar(
                 summary_df,
-                x=cat_col,
+                x=selected_cat,
                 y="Average_Value",
                 text="Average_Value",
-                color=cat_col,
-                title=f"1. Competitor Comparison: Average {selected_metric} (with Market Benchmark Line)",
-                labels={"Average_Value": f"Average {selected_metric}", cat_col: "Competitor / Segment"},
+                color=selected_cat,
+                title=f"1. Average {selected_metric} by {selected_cat} (Exact Values & Market Average)",
+                labels={"Average_Value": f"Avg {selected_metric}", selected_cat: selected_cat},
                 color_discrete_sequence=light_palette,
-                hover_data={"Total_Value": ":,.0f", "Market_Share_%": ":.1f", "Vs_Market_Avg_%": "+.1f"},
+                hover_data={"Total_Value": ":,.0f", "Min_Value": ":,.0f", "Max_Value": ":,.0f", "Share_%": ":.1f"},
             )
             fig_bar.update_traces(texttemplate="%{text:,.1f}", textposition="outside")
             fig_bar.add_hline(
@@ -632,10 +795,10 @@ with tab_overview:
         with g2:
             fig_pie = px.pie(
                 summary_df,
-                names=cat_col,
+                names=selected_cat,
                 values="Total_Value",
-                hole=0.45,
-                title=f"2. Market Share Breakdown by {selected_metric} (%)",
+                hole=0.42,
+                title=f"2. Total {selected_metric} Share (%)",
                 color_discrete_sequence=light_palette,
             )
             fig_pie.update_traces(
@@ -650,10 +813,32 @@ with tab_overview:
             )
             st.plotly_chart(fig_pie, use_container_width=True)
 
-        # ROW 2: Strategic Positioning Quadrant + Multi-Metric Comparison
+        # ROW 2: Horizontal Total Volume Ranking + Strategic Quadrant / Multi-Metric Chart
         g3, g4 = st.columns(2)
 
         with g3:
+            ranked_df = summary_df.sort_values("Total_Value", ascending=True)
+            fig_hbar = px.bar(
+                ranked_df,
+                x="Total_Value",
+                y=selected_cat,
+                orientation="h",
+                text="Total_Value",
+                color="Share_%",
+                color_continuous_scale="Tealgrn",
+                title=f"3. Total Cumulative {selected_metric} Ranking (Lowest to Highest)",
+                labels={"Total_Value": f"Total {selected_metric}", selected_cat: selected_cat},
+            )
+            fig_hbar.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
+            fig_hbar.update_layout(
+                plot_bgcolor="#FFFFFF",
+                paper_bgcolor="#FFFFFF",
+                font=dict(color="#1E293B"),
+                xaxis=dict(gridcolor="#F1F5F9"),
+            )
+            st.plotly_chart(fig_hbar, use_container_width=True)
+
+        with g4:
             if len(num_cols) >= 2:
                 x_col = num_cols[0]
                 y_col = num_cols[1]
@@ -662,9 +847,8 @@ with tab_overview:
                     scatter_df,
                     x=x_col,
                     y=y_col,
-                    color=cat_col,
-                    size=num_cols[2] if len(num_cols) >= 3 and (scatter_df[num_cols[2]] > 0).all() else None,
-                    title=f"3. Strategic Positioning Matrix: {x_col} vs. {y_col}",
+                    color=selected_cat,
+                    title=f"4. Positioning Matrix: {x_col} vs. {y_col} (with Market Avg Lines)",
                     color_discrete_sequence=light_palette,
                     hover_data=num_cols[:4],
                 )
@@ -679,83 +863,111 @@ with tab_overview:
                 )
                 st.plotly_chart(fig_quad, use_container_width=True)
             else:
-                fig_hist = px.histogram(
+                fig_box = px.box(
                     df,
-                    x=selected_metric,
-                    nbins=20,
-                    title=f"3. Value Distribution of {selected_metric}",
-                    color_discrete_sequence=["#059669"],
+                    x=selected_cat,
+                    y=selected_metric,
+                    color=selected_cat,
+                    title=f"4. Min, Median & Max Spread of {selected_metric}",
+                    color_discrete_sequence=light_palette,
                 )
-                fig_hist.update_layout(plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF")
-                st.plotly_chart(fig_hist, use_container_width=True)
+                fig_box.update_layout(showlegend=False, plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF")
+                st.plotly_chart(fig_box, use_container_width=True)
 
-        with g4:
-            # Multi-metric normalized comparison across top competitors
-            comp_metrics = num_cols[:3]
-            multi_df = df.groupby(cat_col, as_index=False)[comp_metrics].mean().head(8)
-            melted_df = multi_df.melt(id_vars=cat_col, value_vars=comp_metrics, var_name="Metric", value_name="Value")
-            fig_grouped = px.bar(
-                melted_df,
-                x=cat_col,
-                y="Value",
-                color="Metric",
-                barmode="group",
-                title="4. Multi-Metric Competitor Side-by-Side Comparison",
-                color_discrete_sequence=["#059669", "#0284C7", "#D97706"],
-            )
-            fig_grouped.update_layout(
-                plot_bgcolor="#FFFFFF",
-                paper_bgcolor="#FFFFFF",
-                font=dict(color="#1E293B"),
-                yaxis=dict(gridcolor="#F1F5F9"),
-            )
-            st.plotly_chart(fig_grouped, use_container_width=True)
-
-        # ROW 3: Accurate Competitor-by-Competitor Scorecard Table
-        st.subheader(":material/leaderboard: Competitor Performance Scorecard")
+        # ROW 3: Full Performance Scorecard Table
+        st.subheader(":material/leaderboard: Complete Competitor & Segment Scorecard")
         scorecard = summary_df.copy()
         scorecard.insert(0, "Rank", range(1, len(scorecard) + 1))
-        scorecard["Positioning"] = scorecard["Vs_Market_Avg_%"].apply(
+        scorecard["Market_Position"] = scorecard["Diff_From_Avg_%"].apply(
             lambda x: "Above Market Avg" if x > 0 else ("At Market Avg" if x == 0 else "Below Market Avg")
         )
         st.dataframe(scorecard, use_container_width=True, hide_index=True)
 
     st.divider()
-    st.subheader(":material/table_view: Raw Dataset Preview (Top 500 Records)")
+    st.subheader(":material/table_view: Combined Dataset Preview (Top 500 Rows)")
     st.dataframe(df.head(500), use_container_width=True, hide_index=True)
 
-# --- TAB 2: EXECUTIVE SWOT REPORT ---
+# --- TAB 2: COMPREHENSIVE DATA-DRIVEN SWOT ANALYSIS ---
 with tab_swot:
-    st.subheader(":material/psychology: Executive SWOT & Strategic Action Plan")
-    st.caption("Generates a clear, data-backed strategic summary tailored to your active dataset.")
+    st.subheader(":material/psychology: Comprehensive Data-Driven SWOT & Strategic Roadmap")
+    st.caption("Deep multi-dimensional SWOT synthesis calculated directly from your active dataset(s).")
 
-    if st.button("Generate Concise SWOT Report", icon=":material/auto_awesome:"):
-        swot_output = generate_smart_swot(df)
-        st.markdown(swot_output)
+    if st.button("Generate Full Executive SWOT Report", icon=":material/auto_awesome:"):
+        swot = generate_comprehensive_swot(df)
+        st.info(swot["summary"])
 
-# --- TAB 3: LIVE WEB SCRAPER INTELLIGENCE ---
+        s_col1, s_col2 = st.columns(2)
+        with s_col1:
+            st.markdown("### :material/trending_up: Strengths (Internal Advantages)")
+            for item in swot["strengths"]:
+                st.markdown(f"- {item}")
+
+            st.markdown("### :material/lightbulb: Opportunities (Growth Levers)")
+            for item in swot["opportunities"]:
+                st.markdown(f"- {item}")
+
+        with s_col2:
+            st.markdown("### :material/warning: Weaknesses (Internal Gaps)")
+            for item in swot["weaknesses"]:
+                st.markdown(f"- {item}")
+
+            st.markdown("### :material/shield: Threats (External Market Risks)")
+            for item in swot["threats"]:
+                st.markdown(f"- {item}")
+
+        st.divider()
+        st.markdown("### :material/flag: Prioritized Strategic Action Roadmap")
+        for act in swot["actions"]:
+            st.markdown(act)
+
+# --- TAB 3: UPGRADED MULTI-COMPETITOR LIVE WEB INTELLIGENCE ---
 with tab_scraper:
-    st.subheader(":material/language: Live Competitor Website Analyzer")
-    st.caption("Extract live positioning, headlines, and link footprint from any public competitor URL.")
+    st.subheader(":material/language: Live Competitor Website & Positioning Intelligence")
+    st.caption("Analyze and compare multiple competitor URLs side-by-side (Headings, Value Proposition, Promo Signals, Price Mentions & Load Speed).")
 
-    target_url = st.text_input("Competitor Website URL", placeholder="https://www.example.com")
-    if st.button("Analyze Live Webpage", icon=":material/travel_explore:"):
-        if not target_url.startswith("http"):
-            st.warning("Please enter a valid URL starting with http:// or https://")
+    default_urls = "https://www.limelight.pk/\nhttps://www.gulahmedshop.com/"
+    urls_input = st.text_area(
+        "Enter Competitor Website URLs (One URL per line):",
+        value=default_urls,
+        height=100,
+    )
+
+    if st.button("Run Live Competitor Web Audit", icon=":material/travel_explore:"):
+        url_list = [u.strip() for u in urls_input.splitlines() if u.strip().startswith("http")]
+        if not url_list:
+            st.warning("Please enter at least one valid URL starting with http:// or https://")
         else:
-            with st.spinner("Extracting live webpage intelligence..."):
-                try:
-                    info = scrape_competitor_page(target_url)
-                    headings_str = " | ".join(info["headings"]) if info["headings"] else "No H1/H2 headlines detected"
-                    st.markdown(
-                        f"""
-                        **Executive Webpage Intelligence Brief**
-                        * **Brand / Page Title:** {info['title']}
-                        * **Core Positioning:** {info['meta_desc']}
-                        * **Primary Headlines:** {headings_str}
-                        * **Navigation Footprint:** {info['links_count']} internal/external links detected
-                        * **Recommended Counter-Strategy:** Benchmark landing-page value propositions and differentiate on warranty, delivery speed, and transparent pricing.
-                        """
-                    )
-                except Exception as e:
-                    st.error(f"Extraction failed: {e}")
+            results = []
+            with st.spinner(f"Auditing {len(url_list)} live website(s)..."):
+                for u in url_list:
+                    try:
+                        results.append(analyze_competitor_url(u))
+                    except Exception as e:
+                        st.error(f"Could not access {u}: {e}")
+
+            if results:
+                # Side-by-side comparison table
+                comp_table = pd.DataFrame(
+                    [
+                        {
+                            "Brand / Site": r["brand"],
+                            "Page Title": r["title"][:55],
+                            "Detected Promo Signals": r["promo_signals"],
+                            "Sample Prices Found": r["sample_prices"],
+                            "Links Count": r["links_count"],
+                            "Images Count": r["images_count"],
+                            "Response Time (s)": r["load_time_sec"],
+                        }
+                        for r in results
+                    ]
+                )
+                st.markdown("### :material/compare_arrows: Live Competitor Web Comparison Matrix")
+                st.dataframe(comp_table, use_container_width=True, hide_index=True)
+
+                # Detailed breakdown per website
+                for r in results:
+                    with st.expander(f"Detailed Intelligence Brief — {r['brand']} ({r['url']})", expanded=True):
+                        st.markdown(f"**Core Positioning (Meta Description):** {r['meta_desc']}")
+                        headings_str = " | ".join(r["headings"]) if r["headings"] else "No H1–H3 headings exposed"
+                        st.markdown(f"**Key Landing Page Headlines:** {headings_str}")
+                        st.markdown(f"**Active Promotional Keywords:** `{r['promo_signals']}` | **Detected Price Tags:** `{r['sample_prices']}`")
