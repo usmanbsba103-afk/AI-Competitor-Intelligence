@@ -12,55 +12,160 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- CUSTOM ROYAL GREEN & WHITE EXECUTIVE STYLING ---
+# --- UPGRADED LUXURY ROYAL EMERALD & GOLD-ACCENTED EXECUTIVE THEME ---
 st.markdown(
     """
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        html, body, [class*="css"] {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
         .stApp {
-            background-color: #FFFFFF;
-            color: #0F291E;
+            background: linear-gradient(180deg, #F6FBF8 0%, #FFFFFF 35%);
+            color: #0B251A;
         }
         [data-testid="stSidebar"] {
-            background-color: #F2F8F5;
-            border-right: 1px solid #D5E8DF;
+            background: linear-gradient(180deg, #093D26 0%, #0B4F32 100%);
+            border-right: 1px solid #146C43;
         }
-        .exec-header {
-            background: linear-gradient(135deg, #0B4F32 0%, #146C43 100%);
-            padding: 1.5rem 2rem;
+        [data-testid="stSidebar"] * {
+            color: #F0FAF5 !important;
+        }
+        [data-testid="stSidebar"] .stFileUploader section {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            border: 1px dashed #6EE7B7 !important;
             border-radius: 10px;
+        }
+        [data-testid="stSidebar"] .stButton > button,
+        [data-testid="stSidebar"] .stDownloadButton > button {
+            background-color: #10B981 !important;
+            color: #052E1C !important;
+            font-weight: 700 !important;
+            border: none !important;
+            border-radius: 8px !important;
+        }
+        [data-testid="stSidebar"] .stButton > button:hover,
+        [data-testid="stSidebar"] .stDownloadButton > button:hover {
+            background-color: #34D399 !important;
+            transform: translateY(-1px);
+        }
+
+        /* Executive Banner */
+        .exec-header {
+            background: linear-gradient(120deg, #063722 0%, #0B4F32 55%, #157347 100%);
+            padding: 1.8rem 2.2rem;
+            border-radius: 14px;
             color: #FFFFFF;
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 12px rgba(11, 79, 50, 0.12);
+            border-bottom: 4px solid #D4AF37;
+            box-shadow: 0 10px 25px rgba(11, 79, 50, 0.16);
         }
         .exec-header h1 {
             color: #FFFFFF !important;
-            font-size: 1.85rem;
-            font-weight: 700;
+            font-size: 1.95rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
             margin: 0;
         }
         .exec-header p {
-            color: #E2F1EA !important;
-            font-size: 0.95rem;
-            margin: 0.4rem 0 0 0;
+            color: #D1FAE5 !important;
+            font-size: 0.98rem;
+            margin: 0.45rem 0 0 0;
         }
-        [data-testid="stMetric"] {
-            background-color: #FFFFFF;
-            border: 1px solid #D5E8DF;
+
+        /* Interactive Hover KPI Cards */
+        .kpi-card {
+            position: relative;
+            background: #FFFFFF;
+            border: 1px solid #D1E7DD;
             border-left: 5px solid #0B4F32;
-            padding: 1rem 1.2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(15, 41, 30, 0.04);
+            border-radius: 12px;
+            padding: 1.15rem 1.3rem;
+            box-shadow: 0 4px 12px rgba(11, 79, 50, 0.05);
+            transition: all 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            overflow: hidden;
+            min-height: 128px;
         }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            border-color: #10B981;
+            border-left: 6px solid #D4AF37;
+            background: linear-gradient(135deg, #FFFFFF 0%, #ECFDF5 100%);
+            box-shadow: 0 14px 28px rgba(11, 79, 50, 0.16);
+        }
+        .kpi-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #3B6E57;
+            margin-bottom: 0.35rem;
+        }
+        .kpi-value {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: #083B25;
+            line-height: 1.2;
+        }
+        .kpi-hint {
+            font-size: 0.76rem;
+            color: #6B9080;
+            margin-top: 0.4rem;
+        }
+        .kpi-detail-box {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            font-size: 0.82rem;
+            color: #064E3B;
+            background: #D1FAE5;
+            border-radius: 6px;
+            padding: 0 0.6rem;
+            margin-top: 0;
+        }
+        .kpi-card:hover .kpi-detail-box {
+            max-height: 90px;
+            opacity: 1;
+            padding: 0.45rem 0.65rem;
+            margin-top: 0.55rem;
+        }
+        .kpi-card:hover .kpi-hint {
+            display: none;
+        }
+
+        /* Tutorial Card */
+        .tutorial-box {
+            background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
+            border: 1px solid #6EE7B7;
+            border-left: 6px solid #10B981;
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.08);
+        }
+        .tutorial-box h4 {
+            margin: 0 0 0.5rem 0;
+            color: #064E3B;
+            font-weight: 800;
+        }
+
+        /* Primary Buttons */
         .stButton > button {
-            background-color: #0B4F32 !important;
+            background: linear-gradient(135deg, #0B4F32 0%, #146C43 100%) !important;
             color: #FFFFFF !important;
             border: none !important;
-            border-radius: 6px !important;
+            border-radius: 8px !important;
             font-weight: 600 !important;
-            padding: 0.5rem 1.2rem !important;
+            padding: 0.55rem 1.3rem !important;
+            box-shadow: 0 4px 10px rgba(11, 79, 50, 0.15) !important;
+            transition: all 0.2s ease !important;
         }
         .stButton > button:hover {
-            background-color: #083B25 !important;
+            background: linear-gradient(135deg, #083B25 0%, #0B4F32 100%) !important;
+            transform: translateY(-1px);
         }
     </style>
     """,
@@ -74,51 +179,57 @@ if "current_user" not in st.session_state:
     st.session_state.current_user = ""
 if "users_db" not in st.session_state:
     st.session_state.users_db = {"admin": "fyp2026"}
+if "show_tutorial" not in st.session_state:
+    st.session_state.show_tutorial = True
 
 
-# --- AUTHENTICATION PORTAL ---
+# --- 1. DIRECT LOGIN & SIGN-UP PORTAL ---
 def render_login_portal():
-    col1, col2, col3 = st.columns([1, 1.4, 1])
+    col1, col2, col3 = st.columns([1, 1.45, 1])
     with col2:
         st.markdown(
             """
-            <div class="exec-header" style="text-align:center; margin-top:2rem;">
+            <div class="exec-header" style="text-align:center; margin-top:1.5rem;">
                 <h1>Competitor Intelligence Portal</h1>
                 <p>Enterprise Market Analytics & Strategic Benchmarking System</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        tab_login, tab_register = st.tabs(["Sign In", "Create Account"])
+        tab_login, tab_register = st.tabs(["Sign In", "Create Account (Instant Access)"])
 
         with tab_login:
             with st.form("login_form"):
-                username = st.text_input("Username", placeholder="Enter username")
-                password = st.text_input("Password", type="password", placeholder="Enter password")
-                submitted = st.form_submit_button("Sign In", use_container_width=True)
+                username = st.text_input("Username", placeholder="Enter your username")
+                password = st.text_input("Password", type="password", placeholder="Enter your password")
+                submitted = st.form_submit_button("Sign In to Dashboard", use_container_width=True)
                 if submitted:
                     if username in st.session_state.users_db and st.session_state.users_db[username] == password:
                         st.session_state.authenticated = True
                         st.session_state.current_user = username
+                        st.session_state.show_tutorial = True
                         st.rerun()
                     else:
                         st.error("Invalid credentials. Use demo account: admin / fyp2026")
-            st.caption("Demo Access — Username: `admin` | Password: `fyp2026`")
+            st.caption("Quick Demo Login — Username: `admin` | Password: `fyp2026`")
 
         with tab_register:
             with st.form("register_form"):
-                new_user = st.text_input("Choose Username")
-                new_pass = st.text_input("Choose Password", type="password")
-                reg_submit = st.form_submit_button("Register Account", use_container_width=True)
+                new_user = st.text_input("Choose Username", placeholder="e.g., usman_analyst")
+                new_pass = st.text_input("Create Password", type="password", placeholder="Enter strong password")
+                reg_submit = st.form_submit_button("Create Account & Login Directly", use_container_width=True)
                 if reg_submit:
-                    if new_user and new_pass:
+                    if new_user.strip() and new_pass.strip():
                         if new_user in st.session_state.users_db:
-                            st.warning("Username already exists.")
+                            st.warning("This username is already taken. Please sign in or pick another.")
                         else:
-                            st.session_state.users_db[new_user] = new_pass
-                            st.success("Account created. Please switch to Sign In.")
+                            st.session_state.users_db[new_user.strip()] = new_pass.strip()
+                            st.session_state.authenticated = True
+                            st.session_state.current_user = new_user.strip()
+                            st.session_state.show_tutorial = True
+                            st.rerun()
                     else:
-                        st.warning("Please complete both fields.")
+                        st.warning("Please enter both a username and password.")
 
 
 if not st.session_state.authenticated:
@@ -126,7 +237,7 @@ if not st.session_state.authenticated:
     st.stop()
 
 
-# --- SMART COLUMN DETECTOR & DATA ENGINE ---
+# --- SMART DATA & FILE-ADAPTIVE KPI ENGINE ---
 def load_sample_data():
     return pd.DataFrame(
         {
@@ -155,63 +266,124 @@ def find_column(df: pd.DataFrame, keywords: list, numeric_only: bool = False):
     return cols[0] if cols else None
 
 
-def compute_smart_kpis(df: pd.DataFrame):
+def build_adaptive_kpis(df: pd.DataFrame, file_label: str) -> list:
+    """Dynamically builds 4 tailored KPI cards with rich hover breakdowns based on uploaded file."""
     num_cols = df.select_dtypes(include="number").columns.tolist()
     cat_cols = df.select_dtypes(exclude="number").columns.tolist()
+    total_rows = len(df)
+    total_cols = len(df.columns)
 
-    # 1. Price / Amount KPI
-    price_col = find_column(df, ["price", "salesamount", "amount", "sales", "revenue", "cost"], numeric_only=True)
+    # KPI 1: Dataset Scale
+    kpis = [
+        {
+            "label": "Tracked Records",
+            "value": f"{total_rows:,}",
+            "detail": f"Source: {file_label} | {total_cols} total columns ({len(num_cols)} numeric, {len(cat_cols)} text).",
+        }
+    ]
+
+    # KPI 2: Primary Monetary / Price / Sales Metric
+    price_col = find_column(
+        df, ["price", "salesamount", "revenue", "amount", "sales", "cost", "profit"], numeric_only=True
+    )
     if price_col:
-        avg_val = df[price_col].mean()
-        kpi2_label = f"Average {price_col}"
-        kpi2_value = f"PKR {avg_val:,.0f}"
+        avg_v = df[price_col].mean()
+        min_v = df[price_col].min()
+        max_v = df[price_col].max()
+        kpis.append(
+            {
+                "label": f"Avg {price_col}",
+                "value": f"PKR {avg_v:,.0f}",
+                "detail": f"Min: PKR {min_v:,.0f} | Max: PKR {max_v:,.0f} | Total: PKR {df[price_col].sum():,.0f}",
+            }
+        )
     else:
-        kpi2_label = "Numeric Columns"
-        kpi2_value = str(len(num_cols))
+        kpis.append(
+            {
+                "label": "Data Completeness",
+                "value": f"{(1 - df.isna().mean().mean()) * 100:.1f}%",
+                "detail": f"Non-null cell coverage across all {total_rows:,} records.",
+            }
+        )
 
-    # 2. Rating / Volume KPI
-    rating_col = find_column(df, ["rating", "score", "review"], numeric_only=True)
-    if rating_col and ("rating" in rating_col.lower() or "score" in rating_col.lower()):
-        kpi3_label = "Average Customer Rating"
-        kpi3_value = f"{df[rating_col].mean():.2f} / 5.0"
-    elif len(num_cols) > 1:
-        second_col = [c for c in num_cols if c != price_col][0]
-        kpi3_label = f"Total {second_col}"
-        kpi3_value = f"{df[second_col].sum():,.0f}"
-    elif price_col:
-        kpi3_label = f"Total {price_col}"
-        kpi3_value = f"PKR {df[price_col].sum():,.0f}"
+    # KPI 3: Rating / Secondary Numeric Metric
+    rating_col = find_column(df, ["rating", "score", "review", "satisfaction"], numeric_only=True)
+    if rating_col and any(k in rating_col.lower() for k in ["rating", "score", "review", "satisfaction"]):
+        kpis.append(
+            {
+                "label": f"Avg {rating_col}",
+                "value": f"{df[rating_col].mean():.2f} / 5.0",
+                "detail": f"Highest: {df[rating_col].max():.2f} | Lowest: {df[rating_col].min():.2f} across dataset.",
+            }
+        )
     else:
-        kpi3_label = "Total Attributes"
-        kpi3_value = str(len(df.columns))
+        other_nums = [c for c in num_cols if c != price_col]
+        if other_nums:
+            sec_col = other_nums[0]
+            kpis.append(
+                {
+                    "label": f"Total {sec_col}",
+                    "value": f"{df[sec_col].sum():,.0f}",
+                    "detail": f"Mean per record: {df[sec_col].mean():,.2f} | Peak value: {df[sec_col].max():,.2f}",
+                }
+            )
+        elif price_col:
+            kpis.append(
+                {
+                    "label": f"Cumulative {price_col}",
+                    "value": f"PKR {df[price_col].sum():,.0f}",
+                    "detail": f"Median {price_col}: PKR {df[price_col].median():,.0f}",
+                }
+            )
+        else:
+            kpis.append(
+                {
+                    "label": "Unique Categories",
+                    "value": f"{df[cat_cols[0]].nunique():,}" if cat_cols else "0",
+                    "detail": f"Distinct groups found in {cat_cols[0]}." if cat_cols else "No categorical columns.",
+                }
+            )
 
-    # 3. Leader / Top Category KPI
-    name_col = find_column(df, ["competitor", "brand", "product", "category", "territory", "country", "name"], numeric_only=False)
-    share_col = find_column(df, ["share", "salesamount", "sales", "revenue", "price"], numeric_only=True)
+    # KPI 4: Dominant Entity / Market Leader
+    name_col = find_column(
+        df, ["competitor", "brand", "product", "category", "territory", "country", "region", "name"], numeric_only=False
+    )
+    share_col = find_column(df, ["share", "salesamount", "revenue", "sales", "price"], numeric_only=True)
 
     if name_col and share_col and "competitor_name" in [c.lower() for c in df.columns]:
-        leader = df.loc[df[share_col].idxmax(), name_col]
-        kpi4_label = "Market Share Leader"
-        kpi4_value = str(leader)
-    elif name_col:
-        top_item = df[name_col].dropna().value_counts().index[0]
-        kpi4_label = f"Top {name_col}"
-        kpi4_value = str(top_item)[:22]
-    elif cat_cols:
-        top_item = df[cat_cols[0]].dropna().value_counts().index[0]
-        kpi4_label = f"Top {cat_cols[0]}"
-        kpi4_value = str(top_item)[:22]
+        leader_row = df.loc[df[share_col].idxmax()]
+        kpis.append(
+            {
+                "label": "Market Leader",
+                "value": str(leader_row[name_col]),
+                "detail": f"Leads with {leader_row[share_col]}% share | Advantage: {leader_row.get('Key_Advantage', 'Top position')}",
+            }
+        )
+    elif name_col and not df[name_col].dropna().empty:
+        vc = df[name_col].dropna().value_counts()
+        top_name = str(vc.index[0])
+        top_pct = (vc.iloc[0] / total_rows) * 100
+        kpis.append(
+            {
+                "label": f"Top {name_col}",
+                "value": top_name[:20],
+                "detail": f"Appears in {vc.iloc[0]:,} records ({top_pct:.1f}% of total dataset).",
+            }
+        )
     else:
-        kpi4_label = "Dataset Columns"
-        kpi4_value = str(len(df.columns))
+        kpis.append(
+            {
+                "label": "Active Columns",
+                "value": str(total_cols),
+                "detail": f"Attributes: {', '.join(df.columns[:4])}...",
+            }
+        )
 
-    return kpi2_label, kpi2_value, kpi3_label, kpi3_value, kpi4_label, kpi4_value
+    return kpis
 
 
 def generate_smart_swot(df: pd.DataFrame) -> str:
     total_rows = len(df)
-    num_cols = df.select_dtypes(include="number").columns.tolist()
-
     if "Competitor_Name" in df.columns and "Price" in df.columns:
         avg_p = df["Price"].mean()
         min_row = df.loc[df["Price"].idxmin()]
@@ -305,14 +477,20 @@ def scrape_competitor_page(url: str) -> dict:
 # --- SIDEBAR ---
 with st.sidebar:
     st.markdown(f"### :material/account_circle: {st.session_state.current_user.title()}")
-    if st.button("Sign Out", icon=":material/logout:", use_container_width=True):
-        st.session_state.authenticated = False
-        st.session_state.current_user = ""
-        st.rerun()
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        if st.button("Guide", icon=":material/help:", use_container_width=True):
+            st.session_state.show_tutorial = True
+            st.rerun()
+    with col_s2:
+        if st.button("Logout", icon=":material/logout:", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.current_user = ""
+            st.rerun()
 
     st.divider()
     st.markdown("### :material/database: Market Dataset")
-    uploaded_file = st.file_uploader("Upload Competitor Data (.csv / .xlsx)", type=["csv", "xlsx"])
+    uploaded_file = st.file_uploader("Upload Dataset (.csv / .xlsx)", type=["csv", "xlsx"])
 
     if uploaded_file is not None:
         try:
@@ -320,12 +498,15 @@ with st.sidebar:
                 df = pd.read_csv(uploaded_file)
             else:
                 df = pd.read_excel(uploaded_file)
-            st.success("Dataset loaded successfully.")
+            file_label = uploaded_file.name
+            st.success(f"Loaded: {file_label}")
         except Exception as e:
             st.error(f"File error: {e}")
             df = load_sample_data()
+            file_label = "Default Benchmark"
     else:
         df = load_sample_data()
+        file_label = "Default Benchmark"
         st.info("Using default benchmark dataset")
 
     sample_csv = load_sample_data().to_csv(index=False).encode("utf-8")
@@ -344,19 +525,51 @@ st.markdown(
     """
     <div class="exec-header">
         <h1>AI-Powered Competitor Intelligence & Market Analysis</h1>
-        <p>Automated Competitive Benchmarking, Pricing Analytics & Strategic SWOT Synthesis</p>
+        <p>Automated Competitive Benchmarking, Adaptive KPI Analytics & Strategic SWOT Synthesis</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-# DYNAMIC KPI SUMMARY ROW (WORKS FOR ANY DATASET)
-k2_lbl, k2_val, k3_lbl, k3_val, k4_lbl, k4_val = compute_smart_kpis(df)
-k1, k2, k3, k4 = st.columns(4)
-k1.metric("Tracked Records", f"{len(df):,}")
-k2.metric(k2_lbl, k2_val)
-k3.metric(k3_lbl, k3_val)
-k4.metric(k4_lbl, k4_val)
+# --- 2. INTERACTIVE ONBOARDING TUTORIAL ---
+if st.session_state.show_tutorial:
+    st.markdown(
+        """
+        <div class="tutorial-box">
+            <h4>Quick-Start Platform Tour — Welcome!</h4>
+            <p style="margin-bottom:0.5rem; color:#065F46;">
+                Here is how to get the most out of your Competitor Intelligence Dashboard in 4 quick steps:
+            </p>
+            <ul style="margin:0; padding-left:1.2rem; color:#064E3B; font-size:0.92rem;">
+                <li><strong>1. Upload Any Dataset (Left Sidebar):</strong> Upload any CSV or Excel file — KPIs and charts automatically adapt to your file's columns.</li>
+                <li><strong>2. Hover Over KPI Cards Below:</strong> Move your cursor over any KPI card to highlight it and inspect min, max, and cumulative details.</li>
+                <li><strong>3. Market Analytics & Charts:</strong> Explore interactive price comparisons, scatter positioning, and market share breakdowns.</li>
+                <li><strong>4. Executive SWOT & Live Web Scraper:</strong> Generate an instant strategic SWOT report or analyze any live competitor website URL.</li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("Got it, Hide Tutorial", icon=":material/check_circle:"):
+        st.session_state.show_tutorial = False
+        st.rerun()
+
+# --- 3. FILE-ADAPTIVE HOVER KPI CARDS ---
+kpis = build_adaptive_kpis(df, file_label)
+kpi_cols = st.columns(4)
+for idx, kpi in enumerate(kpis):
+    with kpi_cols[idx]:
+        st.markdown(
+            f"""
+            <div class="kpi-card">
+                <div class="kpi-label">{kpi['label']}</div>
+                <div class="kpi-value">{kpi['value']}</div>
+                <div class="kpi-hint">Hover cursor for breakdown</div>
+                <div class="kpi-detail-box">{kpi['detail']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 st.divider()
 
@@ -375,7 +588,7 @@ with tab_overview:
     st.dataframe(df.head(500), use_container_width=True, hide_index=True)
 
     c1, c2, c3 = st.columns(3)
-    green_palette = ["#0B4F32", "#198754", "#2E9E6B", "#52B788", "#95D5B2"]
+    green_palette = ["#0B4F32", "#157347", "#10B981", "#34D399", "#D4AF37"]
 
     cat_col = find_column(df, ["competitor", "product", "category", "territory", "country", "name"], numeric_only=False)
     val_col = find_column(df, ["price", "salesamount", "amount", "sales", "revenue"], numeric_only=True)
@@ -423,7 +636,7 @@ with tab_overview:
             fig_share.update_layout(paper_bgcolor="white")
             st.plotly_chart(fig_share, use_container_width=True)
 
-# TAB 2: EXECUTIVE SWOT REPORT (INSTANT & ZERO-ERROR)
+# TAB 2: EXECUTIVE SWOT REPORT
 with tab_swot:
     st.subheader(":material/psychology: Executive AI SWOT & Action Plan")
     st.caption("Generates a concise, boardroom-ready strategic synthesis directly from your dataset.")
