@@ -7,7 +7,7 @@ import streamlit as st
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="Competitor Intelligence & Market Analysis",
+    page_title="AI Competitor Intelligence & Market Analysis",
     page_icon=":material/analytics:",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -86,57 +86,50 @@ if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Light"
 
 
-# --- NEO-TACTILE GLASS TOGGLE + HIGH-CLARITY BRIGHT THEME ---
-def apply_theme_styles():
+# --- BRIGHT HIGH-CONTRAST THEME & 3D GLASSMORPHISM TOGGLE ---
+def apply_glass_theme():
     is_dark = st.session_state.authenticated and (st.session_state.theme_mode == "Dark")
 
     if is_dark:
-        bg_main = "#0B0F19"
+        bg_main = "#090D16"
         bg_card = "#131926"
-        bg_sidebar = "#0F1420"
-        text_primary = "#FFFFFF"
-        text_secondary = "#CBD5E1"
-        border_color = "#2A3447"
-        soft_bg = "#1B2336"
+        bg_sidebar = "#0E131F"
+        text_bright = "#FFFFFF"
+        text_sub = "#E2E8F0"
+        border_col = "#2A344A"
+        soft_tint = "#1C2538"
         accent = "#6366F1"
         accent_hover = "#4F46E5"
-        header_bg = "linear-gradient(135deg, #1E1B4B 0%, #312E81 55%, #1E293B 100%)"
-        # Dark glass toggle state (matches image 1: "Dark" on left, glowing moon orb on right)
-        glass_bg = "linear-gradient(145deg, rgba(38,42,52,0.92), rgba(22,25,32,0.96))"
-        glass_border = "rgba(255, 255, 255, 0.16)"
-        glass_shadow = "0 10px 25px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.15)"
-        orb_left = "74px"
-        orb_bg = "radial-gradient(circle at 30% 30%, #FFFFFF, #CBD5E1)"
-        orb_icon = "🌙"
-        label_left = "18px"
+        header_bg = "linear-gradient(135deg, #1E1B4B 0%, #312E81 55%, #0F172A 100%)"
+        # 3D Glass Dark State (Knob on Right with Crescent Moon, Text "Dark" on Left)
+        glass_bg = "linear-gradient(145deg, rgba(35,39,47,0.92), rgba(18,20,26,0.96))"
+        glass_border = "rgba(255, 255, 255, 0.14)"
+        glass_shadow = "0 10px 25px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.18)"
+        knob_transform = "translateX(76px)"
+        knob_bg = "radial-gradient(circle at 30% 30%, #3B4252, #181B22)"
+        knob_shadow = "0 4px 12px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.25)"
+        knob_symbol = "🌙"
         label_text = "Dark"
-        label_color = "#E2E8F0"
+        label_pos = "left: 20px;"
+        label_color = "#F8FAFC"
     else:
-        bg_main = "#F7F8FC"
+        bg_main = "#F5F7FB"
         bg_card = "#FFFFFF"
         bg_sidebar = "#FFFFFF"
-        text_primary = "#0F172A"
-        text_secondary = "#475569"
-        border_color = "#E2E8F0"
-        soft_bg = "#EEF2FF"
+        text_bright = "#090D16"
+        text_sub = "#1E293B"
+        border_col = "#CBD5E1"
+        soft_tint = "#EEF2FF"
         accent = "#4F46E5"
         accent_hover = "#4338CA"
         header_bg = "linear-gradient(135deg, #312E81 0%, #4F46E5 55%, #0EA5E9 100%)"
-        # Light glass toggle state (matches image 2: glowing sun orb on left, "Light" on right)
-        glass_bg = "linear-gradient(145deg, rgba(226,232,240,0.85), rgba(203,213,225,0.9))"
-        glass_border = "rgba(255, 255, 255, 0.75)"
-        glass_shadow = "0 8px 20px rgba(15,23,42,0.12), inset 0 2px 4px rgba(255,255,255,0.8)"
-        orb_left = "6px"
-        orb_bg = "radial-gradient(circle at 30% 30%, #FFFFFF, #F1F5F9)"
-        orb_icon = "☀️"
-        label_left = "62px"
+        # 3D Glass Light State (Knob on Left with Glowing Sun, Text "Light" on Right)
+        glass_bg = "linear-gradient(145deg, rgba(226,232,240,0.88), rgba(203,213,225,0.95))"
+        glass_border = "rgba(255, 255, 255, 0.85)"
+        glass_shadow = "0 10px 25px rgba(15,23,42,0.14), inset 0 2px 4px rgba(255,255,255,0.9)"
+        knob_transform = "translateX(0px)"
+        knob_bg = "radial-gradient(circle at 35% 35%, #FFFFFF, #E2E8F0)"
+        knob_shadow = "0 6px 14px rgba(15,23,42,0.22), inset 0 2px 3px #FFFFFF"
+        knob_symbol = "☀️"
         label_text = "Light"
-        label_color = "#1E293B"
-
-    st.markdown(
-        f"""
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-            html, body, [class*="css"] {{
-                font-family: 'Plus
+        label_
